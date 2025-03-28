@@ -1,6 +1,6 @@
 local_config = {
     "argv": ["--local"],
-    "data_dir": "/mnt/d/VUT/Deepfakes/Datasets/",
+    "data_dir": "../datasets/",
     "rir_root": "/mnt/d/VUT/Deepfakes/Datasets/RIR/",
     "asvspoof2019la": {
         "train_subdir": "LA",
@@ -50,6 +50,14 @@ local_config = {
         "train_protocol": "ASVspoof5.train.tsv",
         "dev_protocol": "ASVspoof5.dev.track_1.tsv",
         "eval_protocol": "ASVspoof5.eval.track_1.tsv",
+    },
+    "sltsstc": {
+        "train_subdir": "slt-sstc",
+        "dev_subdir": "slt-sstc",
+        "eval_subdir": "slt-sstc",
+        "train_protocol": "speaker_mapping_train_labeled.csv",
+        "dev_protocol": "speaker_mapping_val_labeled.csv",
+        "eval_protocol": "speaker_mapping_val_labeled.csv",
     },
     "batch_size": 16,
     "lstm_batch_size": 4,
