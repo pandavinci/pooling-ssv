@@ -1,4 +1,5 @@
 import torch
+import os
 
 from .utils import calculate_EER
 
@@ -17,7 +18,7 @@ class BaseTrainer:
         param path: Path to save the model to
         """
         if isinstance(self.model, torch.nn.Module):
-            torch.save(self.model.state_dict(), path)
+            torch.save(self.model.state_dict(), os.path.join("checkpoints",path))
         else:
             raise NotImplementedError(
                 "Child classes for non-PyTorch models need to implement save_model method"
