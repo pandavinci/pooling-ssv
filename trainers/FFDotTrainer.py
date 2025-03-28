@@ -4,13 +4,16 @@ from tqdm import tqdm
 
 from classifiers.differential.FFDot import FFDot
 from trainers.BaseFFTrainer import BaseFFTrainer
+from losses.CrossEntropyLoss import CrossEntropyLoss
 
 
 class FFDotTrainer(BaseFFTrainer):
-    def __init__(self, model: FFDot, device="cuda" if torch.cuda.is_available() else "cpu"):
-        super().__init__(model, device)
-
-        self.lossfn = BCELoss()
+    def __init__(self, model: FFDot, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu"):
+        # If no loss function is provided, use BCELoss by default for FFDotTrainer
+        if loss_fn is None:
+            loss_fn = BCELoss()
+        
+        super().__init__(model, loss_fn, device)
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         losses = []

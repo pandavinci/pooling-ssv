@@ -3,6 +3,7 @@ from common import build_model, get_dataloaders
 from config import local_config, metacentrum_config, sge_config
 from parse_arguments import parse_args
 from trainers.BaseFFTrainer import BaseFFTrainer
+import numpy as np
 
 
 def main():
@@ -10,7 +11,16 @@ def main():
 
     config = sge_config if args.sge else metacentrum_config if args.metacentrum else local_config
 
-    model, trainer = build_model(args)
+    # Load the datasets first
+    train_dataloader, val_dataloader, eval_dataloader = get_dataloaders(
+        dataset=args.dataset,
+        config=config,
+        lstm=True if "LSTM" in args.classifier else False,
+        augment=args.augment,
+    )
+
+    # Build model with correct number of classes
+    model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
 
     print(f"Trainer: {type(trainer).__name__}")
 
@@ -20,14 +30,6 @@ def main():
         print(f"Loaded model from {args.checkpoint}.")
     else:
         raise ValueError("Checkpoint must be specified when only evaluating.")
-
-    # Load the datasets
-    train_dataloader, val_dataloader, eval_dataloader = get_dataloaders(
-        dataset=args.dataset,
-        config=config,
-        lstm=True if "LSTM" in args.classifier else False,
-        augment=args.augment,
-    )
 
     print(f"Fine-tuning {type(model).__name__} on {type(train_dataloader.dataset).__name__} dataloader.")
 

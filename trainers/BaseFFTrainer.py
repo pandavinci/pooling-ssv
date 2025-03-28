@@ -5,20 +5,25 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 from trainers.BaseTrainer import BaseTrainer
+from losses.CrossEntropyLoss import CrossEntropyLoss as CustomCrossEntropyLoss
 
-
+# This is the base class for all trainers - use this if you aren't experimenting with new approaches
 class BaseFFTrainer(BaseTrainer):
-    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, model, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu"):
         super().__init__(model, device)
 
-        # Mabye TODO??? Add class weights for the loss function - maybe not necessary since we have weighted sampler
-        self.lossfn = CrossEntropyLoss()  # Should also try with BCELoss
+        # Use provided loss function or default to CrossEntropyLoss
+        self.lossfn = loss_fn if loss_fn is not None else CustomCrossEntropyLoss()
         self.optimizer = torch.optim.Adam(
             model.parameters()
         )  # Can play with lr and weight_decay for regularization
         self.device = device
 
         self.model = model.to(device)
+        
+        # Move loss function to the correct device if it has parameters
+        if hasattr(self.lossfn, 'to') and callable(getattr(self.lossfn, 'to')):
+            self.lossfn = self.lossfn.to(device)
 
         # A statistics tracker dict for the training and validation losses, accuracies and EERs
         self.statistics = {

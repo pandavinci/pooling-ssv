@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from torch.utils.data import DataLoader
+import numpy as np
 
 from config import local_config, metacentrum_config, sge_config
 from common import build_model, get_dataloaders
@@ -11,17 +12,7 @@ def main():
 
     config = sge_config if args.sge else metacentrum_config if args.metacentrum else local_config
 
-    model, trainer = build_model(args)
-
-    print(f"Trainer: {type(trainer).__name__}")
-
-    # Load the model from the checkpoint
-    if args.checkpoint:
-        trainer.load_model(args.checkpoint)
-    else:
-        raise ValueError("Checkpoint must be specified when only evaluating.")
-
-    # Load the dataset
+    # Load the dataset first
     eval_dataloader = get_dataloaders(
         dataset=args.dataset,
         config=config,
@@ -31,6 +22,17 @@ def main():
     assert isinstance( # Is here for type checking and hinting compliance
         eval_dataloader, DataLoader
     ), "Error type of eval_dataloader returned from get_dataloaders."
+
+    # Build model with correct number of classes
+    model, trainer = build_model(args, num_classes=len(np.bincount(eval_dataloader.dataset.get_labels())))
+
+    print(f"Trainer: {type(trainer).__name__}")
+
+    # Load the model from the checkpoint
+    if args.checkpoint:
+        trainer.load_model(args.checkpoint)
+    else:
+        raise ValueError("Checkpoint must be specified when only evaluating.")
 
     print(
         f"Evaluating {args.checkpoint} {type(model).__name__} on "

@@ -8,7 +8,7 @@ class FF(FFBase):
     Feedforward classifier for audio embeddings.
     """
 
-    def __init__(self, extractor, feature_processor, in_dim=1024):
+    def __init__(self, extractor, feature_processor, in_dim=1024, num_classes=2):
         """
         Initialize the model.
 
@@ -17,9 +17,10 @@ class FF(FFBase):
         param feature_processor: Model to process the extracted features.
                                  Needs to provide method __call__(input_data)
         param in_dim: Dimension of the input data to the classifier, divisible by 4.
+        param num_classes: Number of output classes (default: 2)
         """
 
-        super().__init__(extractor, feature_processor, in_dim=in_dim)
+        super().__init__(extractor, feature_processor, in_dim=in_dim, num_classes=num_classes)
 
     def forward(self, waveforms):
         """
@@ -33,7 +34,6 @@ class FF(FFBase):
         """
 
         emb = self.extractor.extract_features(waveforms)
-
         emb = self.feature_processor(emb)
 
         out = self.classifier(emb)

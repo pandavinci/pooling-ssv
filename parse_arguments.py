@@ -1,6 +1,6 @@
 import argparse
 
-from common import CLASSIFIERS
+from common import CLASSIFIERS, LOSSES
 
 from safe_gpu import safe_gpu
 
@@ -48,10 +48,40 @@ def parse_args():
         "--processor",
         "--pooling",
         type=str,
-        help=f"Feature processor to be used. One of: {', '.join(feature_processors)}",
+        default="Mean",
+        choices=feature_processors,
+        help=f"Feature processor/pooling to be used. Options: {feature_processors}",
         required=True,
     )
-    # TODO: Allow for passing parameters to the feature processor (mainly MHFA)
+    
+    # loss function
+    available_losses = list(LOSSES.keys())
+    parser.add_argument(
+        "--loss",
+        type=str,
+        choices=available_losses,
+        help=f"Loss function to be used. Options: {available_losses}. Default: CrossEntropy.",
+    )
+    
+    # Loss function specific parameters
+    # Additive Angular Margin Loss parameters
+    parser.add_argument(
+        "--margin",
+        type=float,
+        default=0.5,
+        help="Margin parameter for AdditiveAngularMargin loss (default: 0.5)",
+    )
+    parser.add_argument(
+        "--s",
+        type=float,
+        default=30.0,
+        help="Scale parameter for AdditiveAngularMargin loss (default: 30.0)",
+    )
+    parser.add_argument(
+        "--easy_margin",
+        action="store_true",
+        help="Use easy margin for AdditiveAngularMargin loss",
+    )
 
     # classifier
     parser.add_argument(

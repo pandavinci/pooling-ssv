@@ -6,6 +6,7 @@ from parse_arguments import parse_args
 # trainers
 from trainers.BaseFFTrainer import BaseFFTrainer
 from trainers.BaseSklearnTrainer import BaseSklearnTrainer
+import numpy as np
 
 
 def main():
@@ -13,14 +14,14 @@ def main():
 
     config = sge_config if args.sge else metacentrum_config if args.metacentrum else local_config
 
-    model, trainer = build_model(args)
-
     train_dataloader, val_dataloader, eval_dataloader = get_dataloaders(
         dataset=args.dataset,
         config=config,
         lstm=True if "LSTM" in args.classifier else False,
         augment=args.augment,
     )
+
+    model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
 
     # TODO: Implement training of MHFA and AASIST with SkLearn models
 

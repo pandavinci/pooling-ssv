@@ -9,11 +9,13 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from classifiers.BaseSklearnModel import BaseSklearnModel
 from classifiers.differential.FFConcat import FFLSTM, FFLSTM2, FFConcat1, FFConcat2, FFConcat3
 from classifiers.differential.FFDiff import FFDiff, FFDiffAbs, FFDiffQuadratic
+from classifiers.differential.FFDot import FFDot
 from classifiers.differential.GMMDiff import GMMDiff
 from classifiers.differential.LDAGaussianDiff import LDAGaussianDiff
 from classifiers.differential.SVMDiff import SVMDiff
 from classifiers.FFBase import FFBase
 from classifiers.single_input.FF import FF
+from classifiers.single_input.EmbeddingFF import EmbeddingFF
 
 # Config
 from config import local_config, metacentrum_config, sge_config
@@ -27,6 +29,7 @@ from datasets.ASVspoof2021 import (
     ASVspoof2021LADataset_pair,
     ASVspoof2021LADataset_single,
 )
+from datasets.SLTSSTC import SLTSSTCDataset_pair, SLTSSTCDataset_single
 from datasets.InTheWild import InTheWildDataset_pair, InTheWildDataset_single
 from datasets.Morphing import MorphingDataset_pair, MorphingDataset_single
 from datasets.utils import custom_pair_batch_create, custom_single_batch_create
@@ -45,14 +48,21 @@ from feature_processors.SLS import SLS
 
 # Trainers
 from trainers.BaseTrainer import BaseTrainer
+from trainers.FFDotTrainer import FFDotTrainer
 from trainers.FFPairTrainer import FFPairTrainer
 from trainers.FFTrainer import FFTrainer
+from trainers.EmbeddingFFTrainer import EmbeddingFFTrainer
 from trainers.GMMDiffTrainer import GMMDiffTrainer
 from trainers.LDAGaussianDiffTrainer import LDAGaussianDiffTrainer
 from trainers.SVMDiffTrainer import SVMDiffTrainer
 
+# Loss functions
+from losses.CrossEntropyLoss import CrossEntropyLoss
+from losses.AdditiveAngularMarginLoss import AdditiveAngularMarginLoss
+
 # endregion
 
+# region Constants
 # map of argument names to the classes
 EXTRACTORS: dict[str, type] = {
     "HuBERT_base": HuBERT_base,
@@ -68,9 +78,11 @@ EXTRACTORS: dict[str, type] = {
     "XLSR_1B": XLSR_1B,
     "XLSR_2B": XLSR_2B,
 }
+
 CLASSIFIERS: Dict[str, Tuple[type, Dict[str, type]]] = {
     # Maps the classifier to tuples of the corresponding class and the initializable arguments
     "FF": (FF, {}),
+    "EmbeddingFF": (EmbeddingFF, {}),
     "FFConcat1": (FFConcat1, {}),
     "FFConcat2": (FFConcat2, {}),
     "FFConcat3": (FFConcat3, {}),
@@ -83,8 +95,16 @@ CLASSIFIERS: Dict[str, Tuple[type, Dict[str, type]]] = {
     "LDAGaussianDiff": (LDAGaussianDiff, {}),
     "SVMDiff": (SVMDiff, {"kernel": str}),
 }
+
+# List of classifiers that are compatible with embedding-based losses
+EMBEDDING_COMPATIBLE_CLASSIFIERS = [
+    "EmbeddingFF",
+    # Add any future embedding-compatible classifiers here
+]
+
 TRAINERS = {  # Maps the classifier to the trainer
     "FF": FFTrainer,
+    "EmbeddingFF": EmbeddingFFTrainer,
     "FFConcat1": FFPairTrainer,
     "FFConcat2": FFPairTrainer,
     "FFConcat3": FFPairTrainer,
@@ -97,6 +117,57 @@ TRAINERS = {  # Maps the classifier to the trainer
     "LDAGaussianDiff": LDAGaussianDiffTrainer,
     "SVMDiff": SVMDiffTrainer,
 }
+
+# Define loss categories and metadata
+LOSS_METADATA = {
+    # Structure: "loss_name": {"type": "category", "parameters": {...}}
+    "CrossEntropy": {
+        "type": "standard", 
+        "parameters": {}
+    },
+    "AdditiveAngularMargin": {
+        "type": "embedding", 
+        "parameters": {
+            "in_features": int,
+            "out_features": int,
+            "margin": float,
+            "s": float,
+            "easy_margin": bool
+        }
+    },
+    # For future implementation
+    # "CosFace": {
+    #     "type": "embedding",
+    #     "parameters": {
+    #         "in_features": int,
+    #         "out_features": int,
+    #         "margin": float,
+    #         "s": float,
+    #     }
+    # },
+    # "MagFace": {
+    #     "type": "embedding",
+    #     "parameters": {
+    #         "in_features": int,
+    #         "out_features": int,
+    #         "l_a": float,
+    #         "u_a": float,
+    #         "l_margin": float,
+    #         "u_margin": float,
+    #         "scale": float,
+    #     }
+    # }
+}
+
+# Maps the loss name to the loss class
+LOSSES = {
+    "CrossEntropy": CrossEntropyLoss,
+    "AdditiveAngularMargin": AdditiveAngularMarginLoss,
+    # Future losses would be added here
+    # "CosFace": CosFaceLoss,
+    # "MagFace": MagFaceLoss,
+}
+
 DATASETS = {  # map the dataset name to the dataset class
     "ASVspoof2019LADataset_single": ASVspoof2019LADataset_single,
     "ASVspoof2019LADataset_pair": ASVspoof2019LADataset_pair,
@@ -110,7 +181,10 @@ DATASETS = {  # map the dataset name to the dataset class
     "MorphingDataset_pair": MorphingDataset_pair,
     "ASVspoof5Dataset_single": ASVspoof5Dataset_single,
     "ASVspoof5Dataset_pair": ASVspoof5Dataset_pair,
+    "SLTSSTCDataset_single": SLTSSTCDataset_single,
+    "SLTSSTCDataset_pair": SLTSSTCDataset_pair,
 }
+# endregion
 
 
 def get_dataloaders(
@@ -145,6 +219,10 @@ def get_dataloaders(
         train_dataset_class = DATASETS[dataset]
         eval_dataset_class = DATASETS[dataset]
         dataset_config = config["asvspoof5"]
+    elif "SLTSSTC" in dataset:
+        train_dataset_class = DATASETS[dataset]
+        eval_dataset_class = DATASETS[dataset]
+        dataset_config = config["sltsstc"]
     else:
         raise ValueError("Invalid dataset name.")
 
@@ -213,7 +291,7 @@ def get_dataloaders(
         return train_dataloader, val_dataloader, eval_dataloader
 
 
-def build_model(args: Namespace) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer]:
+def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer]:
     # Beware of MHFA or AASIST with SkLearn models, they are not implemented yet
     if args.processor in ["MHFA", "AASIST", "SLS"] and args.classifier in ["GMMDiff", "SVMDiff", "LDAGaussianDiff"]:
         raise NotImplementedError("Training of SkLearn models with MHFA, AASIST or SLS is not yet implemented.")
@@ -259,6 +337,40 @@ def build_model(args: Namespace) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer
         raise ValueError("Only AASIST, MHFA, Mean and SLS processors are currently supported.")
     # endregion
 
+    # region Loss Function
+    loss_fn = None
+    if not args.loss in LOSSES: # invalid loss function
+        raise ValueError(f"Invalid loss function, should be one of: {list(LOSSES.keys())}")
+    else: # valid loss function
+        # Get the loss class and metadata
+        loss_class = LOSSES[args.loss]
+        loss_metadata = LOSS_METADATA[args.loss]
+        loss_params_dict = {}
+        
+        # Set parameters based on loss type
+        if loss_metadata["type"] == "embedding":
+            # Set input feature dimension based on feature processor
+            # i.e. all processors currently maintain the extractor's dimension
+            loss_params_dict['in_features'] = extractor.feature_size
+            
+            # Set output feature dimension (number of classes)
+            loss_params_dict['out_features'] = num_classes
+        
+        # Add any loss-specific parameters from args
+        for param_name, param_type in loss_metadata["parameters"].items():
+            if hasattr(args, param_name) and getattr(args, param_name) is not None:
+                param_value = getattr(args, param_name)
+                loss_params_dict[param_name] = param_type(param_value)
+        
+        # Create the loss function instance
+        loss_fn = loss_class(**loss_params_dict)
+        
+        # Warn if using an embedding-based loss with standard model
+        if loss_metadata["type"] == "embedding" and args.classifier not in EMBEDDING_COMPATIBLE_CLASSIFIERS:
+            print(f"WARNING: You are using an embedding-based loss ({args.loss}) with a non-embedding classifier ({args.classifier}).")
+            print(f"For proper functionality, consider using one of the embedding-compatible classifiers: {EMBEDDING_COMPATIBLE_CLASSIFIERS}")
+    # endregion
+
     # region Model and trainer
     model: FFBase | BaseSklearnModel
     trainer = None
@@ -277,12 +389,14 @@ def build_model(args: Namespace) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer
             model = LDAGaussianDiff(extractor, processor)
             trainer = LDAGaussianDiffTrainer(model)
         # endregion
-        case _:
+        case _: # Everything else that doesn't require special handling
             try:
+                # Users must explicitly choose EmbeddingFF if they want to use embedding-based losses
                 model = CLASSIFIERS[str(args.classifier)][0](
-                    extractor, processor, in_dim=extractor.feature_size
+                    extractor, processor, in_dim=extractor.feature_size, num_classes=num_classes
                 )
-                trainer = TRAINERS[str(args.classifier)](model)
+                trainer_class = TRAINERS[str(args.classifier)]
+                trainer = trainer_class(model, loss_fn)
             except KeyError:
                 raise ValueError(f"Invalid classifier, should be one of: {list(CLASSIFIERS.keys())}")
     # endregion
@@ -290,7 +404,9 @@ def build_model(args: Namespace) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer
     # Print model info
     print(f"Building {type(model).__name__} model with {type(model.extractor).__name__} extractor", end="")
     if isinstance(model, FFBase):
-        print(f" and {type(model.feature_processor).__name__} processor.")
+        print(f" and {type(model.feature_processor).__name__} processor.", end="")
+    if loss_fn is not None:
+        print(f" Using {type(loss_fn).__name__} loss function.")
     else:
         print(".")
 

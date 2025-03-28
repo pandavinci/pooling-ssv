@@ -8,9 +8,9 @@ from trainers.BaseFFTrainer import BaseFFTrainer
 
 class FFTrainer(BaseFFTrainer):
     def __init__(
-        self, model: FF, device="cuda" if torch.cuda.is_available() else "cpu"
+        self, model: FF, lossfn=None, device="cuda" if torch.cuda.is_available() else "cpu"
     ):
-        super().__init__(model, device)
+        super().__init__(model, lossfn, device)
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         """
