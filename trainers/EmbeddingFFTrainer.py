@@ -4,7 +4,7 @@ import numpy as np
 
 from classifiers.single_input.EmbeddingFF import EmbeddingFF
 from trainers.BaseFFTrainer import BaseFFTrainer
-
+from torch.nn.functional import cosine_similarity
 
 class EmbeddingFFTrainer(BaseFFTrainer):
     """
@@ -78,37 +78,60 @@ class EmbeddingFFTrainer(BaseFFTrainer):
 
     def val_epoch(
         self, val_dataloader, save_scores=False
-    ) -> tuple[list[float], list[float], list[float], list[int], list[str]]:
+    ) -> tuple[list[float], list[float], list[float], list[int], list[tuple[str, str]]]:
         """
-        Validate the model on the given dataloader
+        Validate the model on the given dataloader with paired inputs
 
-        param val_dataloader: Dataloader loading the validation data
-        param save_scores: Whether to save the scores
-        return: Tuple(losses, labels, scores, predictions, file_names)
+        Args:
+            val_dataloader: Dataloader loading the validation data
+            save_scores: Whether to save the scores
+            
+        Returns:
+            Tuple(losses, labels, scores, predictions, file_names)
+            - losses: List of loss values
+            - labels: List of ground truth labels (1 for same speaker, 0 for different)
+            - scores: List of cosine distances
+            - predictions: List of binary predictions (1 for same speaker, 0 for different)
+            - file_names: List of (source_path, target_path) tuples
         """
         losses = []
         labels = []
-        scores = []
+        scores = []  # Will store cosine distances
         predictions = []
         file_names = []
 
-        for file_name, wf, label in tqdm(val_dataloader):
-            wf = wf.to(self.device)
-            label = label.to(self.device)
+        self.model.eval()
+        with torch.no_grad():
+            for (source_paths, target_paths), (source_wf, target_wf), label in tqdm(val_dataloader):
+                # Move data to device
+                source_wf = source_wf.to(self.device)
+                target_wf = target_wf.to(self.device)
+                label = label.to(self.device)
 
-            logits, probs, processed_embeddings = self.model(wf)
+                # Get embeddings for both source and target
+                _, _, source_embeddings = self.model(source_wf)
+                _, _, target_embeddings = self.model(target_wf)
                 
-            if any(torch.isnan(label)):
-                loss = np.inf
-            else:
-                loss = self.lossfn(processed_embeddings, label.long()).item()
+                # Compute cosine similarity
+                similarities = cosine_similarity(source_embeddings, target_embeddings)
+                
+                # Convert similarities to predictions (threshold at 0.5)
+                # Small similarity (< 0.5) → same speaker (1)
+                # Large similarity (≥ 0.5) → different speaker (0)
+                preds = (similarities < 0.5).long()
+                
+                if any(torch.isnan(label)):
+                    loss = float('inf')
+                else:
+                    # You might want to adjust your loss function here
+                    loss = self.lossfn(similarities, label.float()).item()
 
-            predictions.extend(torch.argmax(probs, 1).tolist())
+                if save_scores:
+                    file_names.extend(list(zip(source_paths, target_paths)))
+                
+                losses.append(loss)
+                labels.extend(label.cpu().tolist())
+                scores.extend(similarities.cpu().tolist())
+                predictions.extend(preds.cpu().tolist())
 
-            if save_scores:
-                file_names.extend(file_name)
-            losses.append(loss)
-            labels.extend(label.tolist())
-            scores.extend(probs[:, 0].tolist())
-
-        return losses, labels, scores, predictions, file_names 
+        return losses, labels, scores, predictions, file_names
