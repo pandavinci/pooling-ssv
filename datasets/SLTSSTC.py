@@ -78,9 +78,38 @@ class SLTSSTCDataset_pair(SLTSSTCDataset_base):
 
     def __getitem__(self, idx):
         """
-        To be implemented for pair-based approach
+        Returns a pair of audio samples along with their paths and same-speaker label
+        
+        Args:
+            idx (int): Index of the pair in the dataset
+            
+        Returns:
+            tuple: (
+                (str, str): Paths of source and target audio files
+                (torch.Tensor, torch.Tensor): Waveforms of source and target audio
+                int: Label (1 if same speaker, 0 if different speakers)
+            )
         """
-        raise NotImplementedError("Pair implementation not provided")
+        # Get the row from the protocol DataFrame
+        row = self.protocol_df.iloc[idx]
+        
+        # Get the paths for source and target files
+        source_path = os.path.join(self.root_dir, row['source_file'])
+        target_path = os.path.join(self.root_dir, row['target_file'])
+        
+        # Load the waveforms
+        source_wav, _ = load(source_path)
+        target_wav, _ = load(target_path)
+        
+        # Get the label (assuming it's already 1 or 0 in the CSV)
+        label = int(row['label'])
+        
+        # If augmentation is enabled and we're in training mode
+        if self.augment and self.variant == "train":
+            source_wav = self.augmentor.augment(source_wav)
+            target_wav = self.augmentor.augment(target_wav)
+        
+        return (source_path, target_path), (source_wav, target_wav), label
 
 
 class SLTSSTCDataset_single(SLTSSTCDataset_base):
