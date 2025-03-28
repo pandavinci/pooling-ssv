@@ -1,10 +1,9 @@
 # Informed methods for deepfake speech detection
 
-**Author:** Vojtěch Staněk ([vojteskas](https://github.com/vojteskas)), xstane45@vutbr.cz
+**Original author:** Vojtěch Staněk ([vojteskas](https://github.com/vojteskas)), xstane45@vutbr.cz
+**Fork contributor:** Zbyněk Lička ([pandavinci](https://github.com/pandavinci)) ilicka@vutbr.cz
 
-**Abstract:** Deepfake speech technology, which can create highly realistic fake audio, poses significant challenges, from enabling multi-million dollar scams to complicating legal evidence's reliability. This work introduces a novel method for detecting such deepfakes by leveraging bonafide speech samples. Unlike previous strategies, the approach uses trusted ground truth speech samples to identify spoofs, providing critical information that common methods lack. By comparing the bonafide samples with potentially manipulated ones, the aim is to effectively and reliably determine the authenticity of the speech. Results suggest that this innovative approach could be a valuable tool in identifying deepfake speech, offering a new line of defence against this emerging threat.
-
-This repository contains the code for my [Master's thesis](https://www.vut.cz/studenti/zav-prace/detail/152826) and following work.
+This repository is a fork of my colleagues Master's degree implementation. I extend it from deepfake detection to speaker verification.
 
 ## Repository structure
 
@@ -19,6 +18,7 @@ DP
 ├── feature_processors  <- contains pooling implementation (avg pool, MHFA, AASIST)
 ├── scripts             <- output directory for script_generator.py
 ├── trainers            <- contains classes for training and evaluating models
+├── losses              <- contains loss functions 
 ├ Makefile
 ├ README.md
 ├ common.py             <- common code, enums, maps, dataloaders
@@ -58,35 +58,33 @@ pip install -r requirements.txt
 Based on the use-case, use either `train_and_eval.py` or `eval.py` scripts with the following arguments:
 
 ```
-usage: 
-train_and_eval.py [-h/--help] (--local | --metacentrum | --sge) [--checkpoint CHECKPOINT] -d DATASET -e EXTRACTOR -p PROCESSOR -c CLASSIFIER [-a/--augment] [-ep NUM_EPOCHS]
+usage:
+train_and_eval.py [-h] (--metacentrum | --sge | --local) [--checkpoint CHECKPOINT] -d DATASET -e EXTRACTOR -p {MHFA,AASIST,Mean,SLS} [--loss {CrossEntropy,AdditiveAngularMargin}] [--margin MARGIN] [--s S] [--easy_margin] -c CLASSIFIER [-a] [--n_components N_COMPONENTS]
+                         [--covariance_type COVARIANCE_TYPE] [--kernel KERNEL] [-ep NUM_EPOCHS] [--sampling SAMPLING]
 
 Main script for training and evaluating the classifiers.
 
 options:
   -h, --help            show this help message and exit
-
-  --local               Flag for running locally.
   --metacentrum         Flag for running on metacentrum.
-  --sge                 Flag for running on SGE
-
+  --sge                 Flag for running on SGE on BUT FIT.
+  --local               Flag for running locally.
   --checkpoint CHECKPOINT
                         Path to a checkpoint to be loaded. If not specified, the model will be trained from scratch.
-
   -d DATASET, --dataset DATASET
                         Dataset to be used. See common.DATASETS for available datasets.
-
   -e EXTRACTOR, --extractor EXTRACTOR
                         Extractor to be used. See common.EXTRACTORS for available extractors.
-
-  -p PROCESSOR, --processor PROCESSOR, --pooling PROCESSOR
-                        Feature processor to be used. One of: AASIST, MHFA, Mean
-
+  -p {MHFA,AASIST,Mean,SLS}, --processor {MHFA,AASIST,Mean,SLS}, --pooling {MHFA,AASIST,Mean,SLS}
+                        Feature processor/pooling to be used. Options: ['MHFA', 'AASIST', 'Mean', 'SLS']
+  --loss {CrossEntropy,AdditiveAngularMargin}
+                        Loss function to be used. Options: ['CrossEntropy', 'AdditiveAngularMargin']. Default: CrossEntropy.
+  --margin MARGIN       Margin parameter for AdditiveAngularMargin loss (default: 0.5)
+  --s S                 Scale parameter for AdditiveAngularMargin loss (default: 30.0)
+  --easy_margin         Use easy margin for AdditiveAngularMargin loss
   -c CLASSIFIER, --classifier CLASSIFIER
                         Classifier to be used. See common.CLASSIFIERS for available classifiers.
-
-Optional arguments:
-  -a, --augment         Flag for using data augmentation defined in augmentation/Augment.py
+  -a, --augment         Flag for whether to use augmentations during training. Does nothing during evaluation.
 
 Classifier-specific arguments:
   --n_components N_COMPONENTS
@@ -107,4 +105,4 @@ Rohdin, J., Zhang, L., Oldřich, P., Staněk, V., Mihola, D., Peng, J., Stafylak
 
 ## Contact
 
-For any inquiries, questions or ask for help/explanation, contact me at xstane45@vutbr.cz.
+For any inquiries, questions or ask for help/explanation, contact me at ilicka@vutbr.cz.
