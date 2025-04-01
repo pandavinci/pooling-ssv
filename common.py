@@ -220,8 +220,8 @@ def get_dataloaders(
         eval_dataset_class = DATASETS[dataset]
         dataset_config = config["asvspoof5"]
     elif "SLTSSTC" in dataset:
-        train_dataset_class = DATASETS[dataset]
-        eval_dataset_class = DATASETS[dataset]
+        train_dataset_class = DATASETS["SLTSSTCDataset_single"]
+        eval_dataset_class = DATASETS["SLTSSTCDataset_pair"]
         dataset_config = config["sltsstc"]
     else:
         raise ValueError("Invalid dataset name.")
@@ -251,6 +251,8 @@ def get_dataloaders(
         if "2021DF" in dataset:  # 2021DF has a local variant
             dev_kwargs["local"] = True if "--local" in config["argv"] else False
             dev_kwargs["variant"] = "progress"
+            val_dataset = eval_dataset_class(**dev_kwargs)
+        elif "SLTSSTC" in dataset: # SLTSSTC has an embedding-based task - hence paired dataset is needed to evaluate performance
             val_dataset = eval_dataset_class(**dev_kwargs)
         else:
             # Create the dataset based on dynamically created dev_kwargs
