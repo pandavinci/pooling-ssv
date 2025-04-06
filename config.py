@@ -56,7 +56,7 @@ local_config = {
         "dev_subdir": "slt-sstc",
         "eval_subdir": "slt-sstc",
         "train_protocol": "dev_train_labeled.csv",
-        "dev_protocol": "dev_val_labeled.csv",
+        "dev_protocol": "dev_trials.csv",
         "eval_protocol": "dev_trials.csv",
     },
     "batch_size": 16,
