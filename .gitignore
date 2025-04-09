@@ -8,3 +8,5 @@ scores
 *.flac
 *.wav
 .venv
+.docker*
+differential-verification.tar.gz
