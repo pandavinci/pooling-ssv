@@ -1,36 +1,10 @@
-# Informed methods for deepfake speech detection
+# Informed methods for source speaker verification
 
 **Original author:** Vojtěch Staněk ([vojteskas](https://github.com/vojteskas)), xstane45@vutbr.cz
+
 **Fork contributor:** Zbyněk Lička ([pandavinci](https://github.com/pandavinci)) ilicka@vutbr.cz
 
-This repository is a fork of my colleagues Master's degree implementation. I extend it from deepfake detection to speaker verification.
-
-## Repository structure
-
-```
-DP
-├── augmentation        <- contains various data augmentation techniques
-├── classifiers         <- contains the classes for models
-│   ├── differential        <- pair-input
-│   └── single_input        <- single-input
-├── datasets            <- contains Dataset classes (ASVspoof (2019, 2021), ASVspoof5, In-the-Wild, Morphing)
-├── extractors          <- contains various feature extractors
-├── feature_processors  <- contains pooling implementation (avg pool, MHFA, AASIST)
-├── scripts             <- output directory for script_generator.py
-├── trainers            <- contains classes for training and evaluating models
-├── losses              <- contains loss functions 
-├ Makefile
-├ README.md
-├ common.py             <- common code, enums, maps, dataloaders
-├ config.py             <- hardcoded config, paths, batch size
-├ eval.py               <- script for evaluating trained model
-├ parse_arguments.py    <- argument parsing script
-├ requirements.txt      <- requirements to install in conda environment
-├ runner.sh             <- script for simultaneously running scripts from scripts folder
-├ scores_utils.py       <- functions for score analysis and evaluation
-├ script_generator.py   <- helper script to generate job scripts for metacentrum
-└ train_and_eval.py     <- main script for training and evaluating models
-```
+This repository is a fork of my colleagues Master's degree implementation. I extend it from deepfake detection to source speaker verification.
 
 ## Requirements
 
@@ -95,6 +69,33 @@ Classifier-specific arguments:
   -ep NUM_EPOCHS, --num_epochs NUM_EPOCHS
                         Number of epochs to train for. Does not concern SkLearn classifiers.
   --sampling SAMPLING   Variant of sampling the data for training SkLearn mocels. One of: all, avg_pool, random_sample.
+```
+
+## Repository structure
+
+```
+DP
+├── augmentation        <- contains various data augmentation techniques
+├── classifiers         <- contains the classes for models
+│   ├── differential        <- pair-input
+│   └── single_input        <- single-input
+├── datasets            <- contains Dataset classes (ASVspoof (2019, 2021), ASVspoof5, In-the-Wild, Morphing)
+├── extractors          <- contains various feature extractors
+├── feature_processors  <- contains pooling implementation (avg pool, MHFA, AASIST)
+├── scripts             <- output directory for script_generator.py
+├── trainers            <- contains classes for training and evaluating models
+├── losses              <- contains loss functions 
+├ Makefile
+├ README.md
+├ common.py             <- common code, enums, maps, dataloaders
+├ config.py             <- hardcoded config, paths, batch size
+├ eval.py               <- script for evaluating trained model
+├ parse_arguments.py    <- argument parsing script
+├ requirements.txt      <- requirements to install in conda environment
+├ runner.sh             <- script for simultaneously running scripts from scripts folder
+├ scores_utils.py       <- functions for score analysis and evaluation
+├ script_generator.py   <- helper script to generate job scripts for metacentrum
+└ train_and_eval.py     <- main script for training and evaluating models
 ```
 
 ## Publications
