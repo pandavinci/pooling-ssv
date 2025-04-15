@@ -29,10 +29,10 @@ from datasets.ASVspoof2021 import (
     ASVspoof2021LADataset_pair,
     ASVspoof2021LADataset_single,
 )
-from datasets.SLTSSTC import SLTSSTCDataset_pair, SLTSSTCDataset_single
+from datasets.SLTSSTC import SLTSSTCDataset_pair, SLTSSTCDataset_single, SLTSSTCDataset_eval
 from datasets.InTheWild import InTheWildDataset_pair, InTheWildDataset_single
 from datasets.Morphing import MorphingDataset_pair, MorphingDataset_single
-from datasets.utils import custom_pair_batch_create, custom_single_batch_create
+from datasets.utils import custom_pair_batch_create, custom_single_batch_create, custom_eval_batch_create
 
 # Extractors
 from extractors.HuBERT import HuBERT_base, HuBERT_extralarge, HuBERT_large
@@ -183,18 +183,35 @@ DATASETS = {  # map the dataset name to the dataset class
     "ASVspoof5Dataset_pair": ASVspoof5Dataset_pair,
     "SLTSSTCDataset_single": SLTSSTCDataset_single,
     "SLTSSTCDataset_pair": SLTSSTCDataset_pair,
+    "SLTSSTCDataset_eval": SLTSSTCDataset_eval,
 }
 # endregion
 
-
 def get_dataloaders(
-    dataset: str = "ASVspoof2019LADataset_pair",
-    config: dict = metacentrum_config,
+    dataset: str,
+    config: dict,
     lstm: bool = False,
     augment: bool = False,
     eval_only: bool = False,
+    mode: str = "speaker_verification",
 ) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader:
+    """Get dataloader"""
+    match mode:
+        case "deepfake_detection":
+            return get_deepfake_dataloader(dataset, config, lstm, augment, eval_only)
+        case "speaker_verification":
+            return get_speaker_verification_dataloader(dataset, config, lstm, augment, eval_only)
+        case _:
+            raise ValueError("Invalid mode.")
 
+def get_deepfake_dataloader(
+    dataset: str,
+    config: dict,
+    lstm: bool = False,
+    augment: bool = False,
+    eval_only: bool = False
+) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader:
+    """Get dataloaders for deepfake detection mode."""
     # Get the dataset class and config
     # Always train on ASVspoof2019LA, evaluate on the specified dataset (except ASVspoof5)
     dataset_config = {}
@@ -219,10 +236,6 @@ def get_dataloaders(
         train_dataset_class = DATASETS[dataset]
         eval_dataset_class = DATASETS[dataset]
         dataset_config = config["asvspoof5"]
-    elif "SLTSSTC" in dataset:
-        train_dataset_class = DATASETS["SLTSSTCDataset_single"]
-        eval_dataset_class = DATASETS["SLTSSTCDataset_pair"]
-        dataset_config = config["sltsstc"]
     else:
         raise ValueError("Invalid dataset name.")
 
@@ -252,8 +265,6 @@ def get_dataloaders(
             dev_kwargs["local"] = True if "--local" in config["argv"] else False
             dev_kwargs["variant"] = "progress"
             val_dataset = eval_dataset_class(**dev_kwargs)
-        elif "SLTSSTC" in dataset: # SLTSSTC has an embedding-based task - hence paired dataset is needed to evaluate performance
-            val_dataset = eval_dataset_class(**dev_kwargs)
         else:
             # Create the dataset based on dynamically created dev_kwargs
             val_dataset = train_dataset_class(**dev_kwargs)
@@ -271,8 +282,15 @@ def get_dataloaders(
             batch_size=bs,
             collate_fn=collate_func,
             sampler=weighted_sampler,
+            drop_last=True,
         )
-        val_dataloader = DataLoader(val_dataset, batch_size=bs, collate_fn=collate_func, shuffle=True)
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=bs,
+            collate_fn=collate_func,
+            shuffle=True,
+            drop_last=True,
+        )
 
     print("Loading eval dataset...")
     eval_kwargs = {  # kwargs for the dataset class
@@ -285,13 +303,111 @@ def get_dataloaders(
 
     # Create the dataset based on dynamically created eval_kwargs
     eval_dataset = eval_dataset_class(**eval_kwargs)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=bs, collate_fn=collate_func, shuffle=True)
+    eval_dataloader = DataLoader(
+        eval_dataset,
+        batch_size=bs,
+        collate_fn=collate_func,
+        shuffle=True,
+    )
 
     if eval_only:
         return eval_dataloader
     else:
         return train_dataloader, val_dataloader, eval_dataloader
 
+
+def get_speaker_verification_dataloader(
+    dataset: str,
+    config: dict,
+    lstm: bool = False,
+    augment: bool = False,
+    eval_only: bool = False,
+) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader:
+    """Get dataloaders for speaker verification mode."""
+    # Get the dataset class and config
+    dataset_config = {}
+    t = "pair" if "pair" in dataset else "single"
+    if "SLTSSTC" in dataset:
+        train_dataset_class = DATASETS[dataset]
+        val_dataset_class = DATASETS["SLTSSTCDataset_eval"]
+        eval_dataset_class = DATASETS["SLTSSTCDataset_eval"]
+        dataset_config = config["sltsstc"]
+    else:
+        raise ValueError("Invalid dataset name.")
+    
+    # Common parameters
+    collate_func = custom_single_batch_create
+    collate_func_eval = custom_eval_batch_create
+    bs = config["batch_size"] if not lstm else config["lstm_batch_size"]  # Adjust batch size for LSTM models
+
+    # Load the datasets
+    train_dataloader = DataLoader(Dataset())  # dummy dataloader for type hinting compliance
+    val_dataloader = DataLoader(Dataset())  # dummy dataloader for type hinting compliance
+
+    # always load training dataset to get the number of unique speakers
+    print("Loading training datasets...")
+    train_dataset = train_dataset_class(
+        root_dir=config["data_dir"] + dataset_config["train_subdir"],
+        protocol_file_name=dataset_config["train_protocol"],
+        variant="train",
+        augment=augment,
+        rir_root=config["rir_root"],
+    )
+
+    dev_kwargs = {  # kwargs for the dataset class
+        "root_dir": config["data_dir"] + dataset_config["dev_subdir"],
+        "protocol_file_name": dataset_config["dev_protocol"],
+        "variant": "dev",
+    }
+    val_dataset = val_dataset_class(**dev_kwargs)
+
+    # there is about 90% of spoofed recordings in the dataset, balance with weighted random sampling
+    # samples_weights = [train_dataset.get_class_weights()[i] for i in train_dataset.get_labels()]  # old and slow solution
+    samples_weights = np.vectorize(train_dataset.get_class_weights().__getitem__)(
+        train_dataset.get_labels()
+    )  # blazing fast solution
+    weighted_sampler = WeightedRandomSampler(samples_weights, len(train_dataset))
+
+    # create dataloader, use custom collate_fn to pad the data to the longest recording in batch
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=bs,
+        collate_fn=collate_func,
+        sampler=weighted_sampler,
+        drop_last=True,
+    )
+    if not eval_only:
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=bs,
+            collate_fn=collate_func_eval,
+            shuffle=True,
+            drop_last=True,
+        )
+
+
+    print("Loading eval dataset...")
+    eval_kwargs = {  # kwargs for the dataset class
+        "root_dir": config["data_dir"] + dataset_config["eval_subdir"],
+        "protocol_file_name": dataset_config["eval_protocol"],
+        "variant": "eval",
+        "num_speakers": train_dataset.num_speakers,
+    }
+
+    # Create the dataset based on dynamically created eval_kwargs
+    eval_dataset = eval_dataset_class(**eval_kwargs)
+    eval_dataloader = DataLoader(
+        eval_dataset,
+        batch_size=bs,
+        collate_fn=collate_func_eval,
+        shuffle=True,
+    )
+
+    if eval_only:
+        return eval_dataloader
+    else:
+        return train_dataloader, val_dataloader, eval_dataloader
+    
 
 def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer]:
     # Beware of MHFA or AASIST with SkLearn models, they are not implemented yet

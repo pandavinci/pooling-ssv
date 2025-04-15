@@ -24,7 +24,7 @@ def main():
     ), "Error type of eval_dataloader returned from get_dataloaders."
 
     # Build model with correct number of classes
-    model, trainer = build_model(args, num_classes=len(np.bincount(eval_dataloader.dataset.get_labels())))
+    model, trainer = build_model(args, eval_dataloader.dataset.num_speakers)
 
     print(f"Trainer: {type(trainer).__name__}")
 

@@ -119,19 +119,12 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 # Small similarity (< 0.5) → same speaker (1)
                 # Large similarity (≥ 0.5) → different speaker (0)
                 preds = (similarities < 0.5).long()
-                
-                if any(torch.isnan(label)):
-                    loss = float('inf')
-                else:
-                    # You might want to adjust your loss function here
-                    loss = self.lossfn(similarities, label.float()).item()
 
                 if save_scores:
                     file_names.extend(list(zip(source_paths, target_paths)))
                 
-                losses.append(loss)
+                losses.append(similarities.cpu().tolist())
                 labels.extend(label.cpu().tolist())
                 scores.extend(similarities.cpu().tolist())
-                predictions.extend(preds.cpu().tolist())
 
-        return losses, labels, scores, predictions, file_names
+        return losses, labels, scores, file_names

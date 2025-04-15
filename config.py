@@ -59,8 +59,8 @@ local_config = {
         "dev_protocol": "dev_trials.csv",
         "eval_protocol": "dev_trials.csv",
     },
-    "batch_size": 16,
-    "lstm_batch_size": 4,
+    "batch_size": 2,
+    "lstm_batch_size": 2,
     "num_epochs": 1,
 }
 

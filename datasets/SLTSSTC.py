@@ -39,7 +39,7 @@ class SLTSSTCDataset_base(Dataset):
         # Load the CSV protocol file
         protocol_file = os.path.join(self.root_dir, protocol_file_name)
         self.protocol_df = pd.read_csv(protocol_file)
-
+    
     def __len__(self):
         return len(self.protocol_df)
 
@@ -75,6 +75,7 @@ class SLTSSTCDataset_pair(SLTSSTCDataset_base):
         rir_root="",
     ):
         super().__init__(root_dir, protocol_file_name, variant, augment, rir_root)
+        self.num_speakers = len(self.protocol_df["source_speaker_label"].unique())
 
     def __getitem__(self, idx):
         """
@@ -109,7 +110,7 @@ class SLTSSTCDataset_pair(SLTSSTCDataset_base):
             source_wav = self.augmentor.augment(source_wav)
             target_wav = self.augmentor.augment(target_wav)
         
-        return (source_path, target_path), (source_wav, target_wav), label
+        return source_path, target_path, source_wav, target_wav, label
 
 
 class SLTSSTCDataset_single(SLTSSTCDataset_base):
@@ -126,6 +127,7 @@ class SLTSSTCDataset_single(SLTSSTCDataset_base):
         rir_root="",
     ):
         super().__init__(root_dir, protocol_file_name, variant, augment, rir_root)
+        self.num_speakers = len(self.protocol_df["source_speaker_label"].unique())
 
     def __getitem__(self, idx):
         """
@@ -144,3 +146,54 @@ class SLTSSTCDataset_single(SLTSSTCDataset_base):
             waveform = self.augmentor.augment(waveform)
 
         return file_path, waveform, source_speaker_label
+
+
+class SLTSSTCDataset_eval(SLTSSTCDataset_base):
+    """
+    Dataset class for SLT Source Speaker Tracing Challenge that provides pairs of audio for evaluation.
+    This class is specifically designed for evaluation purposes and returns data in a format compatible
+    with the evaluation pipeline.
+    """
+
+    def __init__(
+        self,
+        root_dir,
+        protocol_file_name,
+        variant: Literal["train", "dev", "eval"] = "eval",
+        augment=False,
+        rir_root="",
+        num_speakers: int = 0,
+    ):
+        super().__init__(root_dir, protocol_file_name, variant, augment, rir_root)
+        self.num_speakers = num_speakers
+
+    def __getitem__(self, idx):
+        """
+        Returns evaluation pairs in a format compatible with the evaluation pipeline.
+        
+        Args:
+            idx (int): Index of the pair in the dataset
+            
+        Returns:
+            tuple: (
+                (str, str): Paths of source and target audio files
+                (torch.Tensor, torch.Tensor): Waveforms of source and target audio
+                int: Label (1 if same speaker, 0 if different speakers)
+            )
+        """
+        # Get the row from the protocol DataFrame
+        row = self.protocol_df.iloc[idx]
+        
+        # Get the paths for source and target files
+        source_path = os.path.join(self.root_dir, row['source_file'])
+        target_path = os.path.join(self.root_dir, row['target_file'])
+        
+        # Load the waveforms
+        source_wav, _ = load(source_path)
+        target_wav, _ = load(target_path)
+        
+        # Get the label (assuming it's already 1 or 0 in the CSV)
+        label = int(row['label'])
+        
+        # Return data in the format expected by the evaluation pipeline
+        return (source_path, target_path), (source_wav, target_wav), label

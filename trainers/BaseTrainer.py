@@ -18,6 +18,7 @@ class BaseTrainer:
         param path: Path to save the model to
         """
         if isinstance(self.model, torch.nn.Module):
+            os.makedirs(os.path.dirname(os.path.join("checkpoints",path)), exist_ok=True)
             torch.save(self.model.state_dict(), os.path.join("checkpoints",path))
         else:
             raise NotImplementedError(

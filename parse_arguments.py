@@ -31,6 +31,16 @@ def parse_args():
         required=True,
     )
 
+    # mode
+    parser.add_argument(
+        "-m",
+        "--mode",
+        type=str,
+        choices=["deepfake_detection", "speaker_verification"],
+        default="deepfake_detection",
+        help="Mode of operation: deepfake detection or speaker verification.",
+    )
+
     # extractor
     parser.add_argument(
         "-e",
