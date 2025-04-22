@@ -22,9 +22,6 @@ def main():
     )
 
     model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
-    print(f"Number of speakers: {train_dataloader.dataset.get_num_speakers()}")
-    exit()
-
     # TODO: Implement training of MHFA and AASIST with SkLearn models
 
     print(f"Training on {type(train_dataloader.dataset).__name__} dataloader.")
