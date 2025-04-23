@@ -10,10 +10,10 @@ class PBSheaders:
         self,
         jobname: str,  # name of the job
         queue="gpu@pbs-m1.metacentrum.cz",  # queue name
-        walltime="24:00:00",  # maximum time the job can run
+        walltime="23:59:00",  # maximum time the job can run
         nodes=1,  # number of nodes
         cpus=4,  # number of cpus on a node
-        mem=200,  # memory per node in GB
+        mem=64,  # memory per node in GB
         gpus=1,  # number of gpus
         gpu_mem=20,  # minimum gpu memory in GB
         scratch_size=100,  # minimum scratch_dir size in GB, implicit type is scratch_ssd
@@ -78,7 +78,7 @@ class SGEheaders:
             f"#$ -l gpu={self.gpus},gpu_ram={self.gpu_mem}G,ram_free={self.mem}G",
             f"#$ -m {self.email_notification_flags}",
             f"#$ -j y",
-            f"#$ -o /mnt/strade/istanek/jobs/$JOB_NAME.$JOB_ID.out",
+            f"#$ -o /mnt/strade/ilicka/jobs/$JOB_NAME.$JOB_ID.out",
         ]
 
         return "\n".join(header)
