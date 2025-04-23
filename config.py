@@ -61,12 +61,11 @@ local_config = {
     },
     "batch_size": 2,
     "lstm_batch_size": 2,
-    "num_epochs": 1,
 }
 
 metacentrum_config = {
     "argv": ["--metacentrum"],
-    "data_dir": "./",
+    "data_dir": "../datasets/",
     "rir_root": "/storage/brno2/home/vojteskas/deepfakes/datasets/",
     "asvspoof2019la": {
         "train_subdir": "LA19",
@@ -127,7 +126,6 @@ metacentrum_config = {
     },
     "batch_size": 32,
     "lstm_batch_size": 16,
-    "num_epochs": 20,
 }
 
 sge_config = {
@@ -193,5 +191,4 @@ sge_config = {
     },
     "batch_size": 16,
     "lstm_batch_size": 4,
-    "num_epochs": 10,
 }
