@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN sudo apt install python-is-python3
+#RUN apt install python-is-python3
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser
@@ -20,9 +20,6 @@ COPY --chown=appuser:appuser requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
-COPY --chown=appuser:appuser . .
 
 # Set environment variables
 ENV PYTHONPATH=/app
