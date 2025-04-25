@@ -11,3 +11,4 @@ scores
 .venv
 .docker*
 differential-verification.tar.gz
+embeddings/*

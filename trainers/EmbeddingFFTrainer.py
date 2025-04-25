@@ -87,11 +87,11 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             save_scores: Whether to save the scores
             
         Returns:
-            Tuple(losses, labels, scores, predictions, file_names)
+            Tuple(losses, predictions, labels, scores, file_names)
             - losses: List of loss values
             - labels: List of ground truth labels (1 for same speaker, 0 for different)
             - scores: List of cosine distances
-            - predictions: List of binary predictions (1 for same speaker, 0 for different)
+            - predictions: List of embeddings
             - file_names: List of (source_path, target_path) tuples
         """
         losses = []
@@ -114,17 +114,13 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 
                 # Compute cosine similarity
                 similarities = cosine_similarity(source_embeddings, target_embeddings)
-                
-                # Convert similarities to predictions (threshold at 0.5)
-                # Small similarity (< 0.5) → same speaker (1)
-                # Large similarity (≥ 0.5) → different speaker (0)
-                preds = (similarities < 0.5).long()
+
+                predictions.extend(source_embeddings.cpu().tolist())
 
                 if save_scores:
                     file_names.extend(list(zip(source_paths, target_paths)))
-                
-                losses.append(similarities.cpu().tolist())
+            
                 labels.extend(label.cpu().tolist())
                 scores.extend(similarities.cpu().tolist())
 
-        return losses, labels, scores, file_names
+        return losses, labels, scores, predictions, file_names

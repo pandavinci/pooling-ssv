@@ -110,6 +110,13 @@ def parse_args():
         help="Flag for whether to use augmentations during training. Does nothing during evaluation.",
     )
 
+    # Add flag for saving embeddings
+    parser.add_argument(
+        "--save_embeddings",
+        action="store_true",
+        help="Flag for saving embeddings from the last layer during validation/evaluation.",
+    )
+
     # Add arguments specific to each classifier
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     classifier_args = parser.add_argument_group("Classifier-specific arguments")

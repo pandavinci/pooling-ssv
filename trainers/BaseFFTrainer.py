@@ -101,7 +101,7 @@ class BaseFFTrainer(BaseTrainer):
         raise NotImplementedError("Child classes should implement the train_epoch method")
 
     def val(
-        self, val_dataloader, save_scores=False, plot_det=False, subtitle=""
+        self, val_dataloader, save_scores=False, plot_det=False, subtitle="", save_embeddings=False
     ) -> tuple[float, float, float | None]:
         """
         Common validation loop
@@ -122,6 +122,17 @@ class BaseFFTrainer(BaseTrainer):
                 with open(f"./{type(self.model).__name__}_{subtitle}_scores.txt", "w") as f:
                     for file_name, score, label in zip(file_names, scores, labels):
                         f.write(f"{file_name},{score},{'nan' if math.isnan(label) else int(label)}\n")
+
+            if self.save_embeddings and predictions:
+                embeddings = np.array(predictions)
+    
+                embeddings_file = f"embeddings/{type(self.model).__name__}_{subtitle}_embeddings.npz"
+                np.savez_compressed(
+                    embeddings_file,
+                    embeddings=embeddings,
+                    file_names=file_names
+                )
+                print(f"Saved embeddings to {embeddings_file}")
 
             val_loss = np.mean(losses).astype(float)
             val_accuracy = np.mean(np.array(labels) == np.array(predictions))
