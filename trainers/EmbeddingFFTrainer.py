@@ -16,7 +16,7 @@ class EmbeddingFFTrainer(BaseFFTrainer):
     """
     
     def __init__(
-        self, model: EmbeddingFF, lossfn, device="cuda" if torch.cuda.is_available() else "cpu"
+        self, model: EmbeddingFF, lossfn, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False
     ):
         """
         Initialize the trainer for embedding-based models and losses.
@@ -26,7 +26,7 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             lossfn: The loss function to use (must operate on embeddings)
             device: The device to use for training
         """
-        super().__init__(model, lossfn, device)
+        super().__init__(model, lossfn, device, save_embeddings)
         
         # Validate that the model returns embeddings
         self.model.eval()

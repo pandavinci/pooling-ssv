@@ -1,4 +1,5 @@
 import math
+import os
 import torch
 from torch.nn import CrossEntropyLoss
 from matplotlib import pyplot as plt
@@ -9,7 +10,7 @@ from losses.CrossEntropyLoss import CrossEntropyLoss as CustomCrossEntropyLoss
 
 # This is the base class for all trainers - use this if you aren't experimenting with new approaches
 class BaseFFTrainer(BaseTrainer):
-    def __init__(self, model, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, model, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False):
         super().__init__(model, device)
 
         # Use provided loss function or default to CrossEntropyLoss
@@ -20,6 +21,9 @@ class BaseFFTrainer(BaseTrainer):
         self.device = device
 
         self.model = model.to(device)
+        self.save_embeddings = save_embeddings
+        if save_embeddings:
+            os.makedirs("embeddings", exist_ok=True)
         
         # Move loss function to the correct device if it has parameters
         if hasattr(self.lossfn, 'to') and callable(getattr(self.lossfn, 'to')):
@@ -101,7 +105,7 @@ class BaseFFTrainer(BaseTrainer):
         raise NotImplementedError("Child classes should implement the train_epoch method")
 
     def val(
-        self, val_dataloader, save_scores=False, plot_det=False, subtitle="", save_embeddings=False
+        self, val_dataloader, save_scores=False, plot_det=False, subtitle=""
     ) -> tuple[float, float, float | None]:
         """
         Common validation loop
@@ -125,7 +129,6 @@ class BaseFFTrainer(BaseTrainer):
 
             if self.save_embeddings and predictions:
                 embeddings = np.array(predictions)
-    
                 embeddings_file = f"embeddings/{type(self.model).__name__}_{subtitle}_embeddings.npz"
                 np.savez_compressed(
                     embeddings_file,
@@ -133,9 +136,15 @@ class BaseFFTrainer(BaseTrainer):
                     file_names=file_names
                 )
                 print(f"Saved embeddings to {embeddings_file}")
-
-            val_loss = np.mean(losses).astype(float)
-            val_accuracy = np.mean(np.array(labels) == np.array(predictions))
+            if losses:
+                val_loss = np.mean(losses).astype(float)
+            else:
+                val_loss = 0
+            # best way I could find to compute accuracy when some models return embeddings
+            try:
+                val_accuracy = np.mean(np.array(labels) == np.array(predictions)) if not self.save_embeddings else 0
+            except:
+                val_accuracy = 0
             # Skip EER calculation if any of the labels is None or all labels are the same
             if None in labels or any(map(lambda x: math.isnan(x), labels)):
                 print("Skipping EER calculation due to missing labels")
@@ -144,6 +153,7 @@ class BaseFFTrainer(BaseTrainer):
                 print("Skipping EER calculation due to all labels being the same")
                 eer = None
             else:
+                print(scores)
                 eer = self.calculate_EER(labels, scores, plot_det=plot_det, det_subtitle=subtitle)
 
             return val_loss, val_accuracy, eer
