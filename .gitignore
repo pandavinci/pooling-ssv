@@ -10,5 +10,5 @@ scores
 *.mp3
 .venv
 .docker*
-differential-verification.tar.gz
+*.tar.gz
 embeddings/*
