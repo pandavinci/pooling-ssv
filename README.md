@@ -7,6 +7,16 @@
 This repository is a fork of my colleagues Master's degree implementation. I extend it from deepfake detection to source speaker verification.
 
 ## Requirements
+This repository comes with a Dockerfile:
+```bash
+# build the environment:
+docker build -t $IMAGE_NAME
+# or use a prepackaged one:
+docker import example_image.tar.gz $IMAGE_NAME
+# run an interactive environment
+docker run -it -v $DATASETS_PATH/$DATASET:/datasets/$DATASET -v $REPOSITORY_PATH:/app $IMAGE_NAME:latest
+```
+if you use an interactive docker environment this way, the trained models will be saved in `$REPOSITORY_PATH/checkpoints` by default.
 
 **Python 3.10**, possibly works with newer versions\
 **PyTorch >2.2.0** including torchvision and torchaudio \
