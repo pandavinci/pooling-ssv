@@ -1,7 +1,7 @@
 # Variables
-METAHOME = vojteskas@skirit.ics.muni.cz:~
-METAPATH = /DP
-SGEHOME = istanek@merlin.fit.vutbr.cz:/mnt/strade/istanek
+METAHOME = ilicka@onyx.metacentrum.cz:~
+METAPATH = /asv-zoo
+SGEHOME = ilicka@merlin.fit.vutbr.cz:/mnt/strade/ilicka
 SGEPATH = /jobs
 
 .PHONY: clean clean_scripts scripts pack upload upload_sge
@@ -19,17 +19,17 @@ scripts:
 	python script_generator.py
 
 pack: scripts clean
-	zip -r dp.zip augmentation classifiers datasets extractors feature_processors trainers common.py config.py eval.py finetune.py parse_arguments.py train_and_eval.py requirements.txt
+	zip -r asv-zoo.zip augmentation classifiers datasets extractors feature_processors losses trainers common.py config.py eval.py finetune.py parse_arguments.py train_and_eval.py requirements.txt
 	zip -r scripts.zip scripts -i "*.sh"
 
 upload: pack
 	scp scripts.zip $(METAHOME)$(METAPATH)/scripts.zip
-	scp dp.zip $(METAHOME)$(METAPATH)/dp.zip
+	scp asv-zoo.zip $(METAHOME)$(METAPATH)/dp.zip
 	scp runner.sh $(METAHOME)$(METAPATH)/runner.sh
 
 upload_sge: pack
 	scp scripts.zip $(SGEHOME)$(SGEPATH)/scripts.zip
-	scp dp.zip $(SGEHOME)$(SGEPATH)/dp.zip
+	scp asv-zoo.zip $(SGEHOME)$(SGEPATH)/dp.zip
 	scp runner.sh $(SGEHOME)$(SGEPATH)/runner.sh
 
 download:
