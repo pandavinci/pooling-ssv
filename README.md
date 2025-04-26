@@ -81,6 +81,12 @@ Classifier-specific arguments:
   --sampling SAMPLING   Variant of sampling the data for training SkLearn mocels. One of: all, avg_pool, random_sample.
 ```
 
+Example:
+```
+python3 train_and_eval.py -d SLTSSTCDataset_single -e WavLM_base -p MHFA -c EmbeddingFF --loss AdditiveAngularMargin --metacentrum --save_embeddings
+```
+Train a source speaker verifier on SLT Source Speaker Tracing Challenge using WavLM_base as backbone and MHFA for pooling. The loss function used is AAM loss (nothing else is implemented for speaker verification right now). Configuration used is for Metacentrum (configuration based on available GPUs) and embeddings will be saved after evaluation.
+
 ## Repository structure
 
 ```
