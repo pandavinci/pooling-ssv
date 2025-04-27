@@ -153,7 +153,6 @@ class BaseFFTrainer(BaseTrainer):
                 print("Skipping EER calculation due to all labels being the same")
                 eer = None
             else:
-                print(scores)
                 eer = self.calculate_EER(labels, scores, plot_det=plot_det, det_subtitle=subtitle)
 
             return val_loss, val_accuracy, eer
