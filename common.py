@@ -430,7 +430,6 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         head_nb = round(
             input_transformer_nb * 4 / 3
         )  # Half random guess number, half based on the paper and testing
-        head_nb = 1
 
         processor = MHFA(
             head_nb=head_nb,
