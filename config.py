@@ -121,7 +121,7 @@ metacentrum_config = {
         "dev_subdir": "slt-sstc",
         "eval_subdir": "slt-sstc",
         "train_protocol": "train_list.csv",
-        "dev_protocol": "dev_trials.csv",
+        "dev_protocol": "dev_trials_50k.csv",
         "eval_protocol": "test_trials.csv",
     },
     "batch_size": 32,
