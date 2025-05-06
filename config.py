@@ -1,7 +1,7 @@
 local_config = {
     "argv": ["--local"],
     "data_dir": "../datasets/",
-    "rir_root": "/mnt/d/VUT/Deepfakes/Datasets/RIR/",
+    "rir_root": "/home/licka/Research/datasets/rirs_noises",
     "asvspoof2019la": {
         "train_subdir": "LA",
         "dev_subdir": "LA",
@@ -66,7 +66,7 @@ local_config = {
 metacentrum_config = {
     "argv": ["--metacentrum"],
     "data_dir": "../datasets/",
-    "rir_root": "/storage/brno2/home/vojteskas/deepfakes/datasets/",
+    "rir_root": "/storage/brno2/home/pandavinci/datasets/rirs_noises",
     "asvspoof2019la": {
         "train_subdir": "LA19",
         "dev_subdir": "LA19",
@@ -130,8 +130,8 @@ metacentrum_config = {
 
 sge_config = {
     "argv": ["--sge"],
-    "data_dir": "/mnt/strade/istanek/datasets/",
-    "rir_root": "/mnt/strade/istanek/datasets/",
+    "data_dir": "/mnt/strade/ilicka/datasets/",
+    "rir_root": "/mnt/strade/ilicka/datasets/rirs_noises",
     "asvspoof2019la": {
         "train_subdir": "LA19",
         "dev_subdir": "LA19",
