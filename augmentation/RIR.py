@@ -5,7 +5,6 @@ import torch
 import torchaudio
 import torchaudio.transforms as T
 import os
-from scipy import signal
 import numpy as np
 
 class RIRDataset:
