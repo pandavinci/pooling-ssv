@@ -27,6 +27,7 @@ class RIRDataset:
 
         # Remove RWCP from the isotropic noises (is not mono)
         self.df_rir = rir_df
+        self.df_rir = self.df_rir[~self.df_rir.str.contains("RWCP")]
         self.df_noise = pd.concat([pointsource_df, isotropic_df], ignore_index=True)
 
     def __len__(self):
@@ -45,7 +46,7 @@ class RIRDataset:
             raise e
         if rir.size(0) > 1:
             rir = rir.mean(0)
-        return rir, sr, which_augmentation
+        return rir, which_augmentation
 
 
 class RIRAugmentations:
@@ -59,7 +60,6 @@ class RIRAugmentations:
         self.device = device
         self.sample_rate = sample_rate
         self.rir_dataset = RIRDataset(rir_root)
-        self.convolver = T.FFTConvolve(mode="same").to(self.device)
 
     def apply_rir(
         self,
@@ -77,14 +77,15 @@ class RIRAugmentations:
         return: The audio waveform with the RIR applied.
         """
         waveform = waveform.to(self.device)
-        rir, sample_rate, which_augmentation = self.rir_dataset.get_random_rir(which_augmentation)
+        rir, which_augmentation = self.rir_dataset.get_random_rir(which_augmentation)
+        rir = rir.to(self.device)
         if which_augmentation == "rir":
-            rir = rir.to(self.device)
             rir = rir / torch.linalg.vector_norm(rir, ord=2)
             rir = rir.squeeze()
+            T = waveform.shape[-1]
             wf = torchaudio.functional.fftconvolve(waveform, rir)
+            wf = wf[..., :T]
         elif which_augmentation == "noise":
-            rir = rir.to(self.device)
             rir = rir.squeeze()
             if len(rir) < len(waveform):
                 rir = torch.cat([rir, torch.zeros(len(waveform) - len(rir))])
@@ -104,9 +105,9 @@ if __name__ == "__main__":
     rir_augment = RIRAugmentations(os.path.join("..", "datasets", "rirs_noises"))
     waveform, sr = torchaudio.load(os.path.join("augmentation", "test.wav"))
     waveform = waveform.squeeze()
-    print(f"Before superposition: {waveform.shape}")
+    print(f"Before RIR: {waveform.shape}")
     augmented_waveform = rir_augment.apply_rir(waveform, which_augmentation="rir", scale_factor=0.8)
-    print(f"After superposition: {augmented_waveform.shape}")
+    print(f"After RIR: {augmented_waveform.shape}")
     torchaudio.save(os.path.join("augmentation", "rir.wav"), augmented_waveform.unsqueeze(0), sr)
     print(f"Before noise: {waveform.shape}")
     augmented_waveform = rir_augment.apply_rir(waveform, which_augmentation="noise", scale_factor=0.8)
