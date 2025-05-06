@@ -6,7 +6,7 @@ from augmentation.Codec import CodecAugmentations
 from augmentation.General import GeneralAugmentations
 from augmentation.NoiseFilter import NoiseFilterAugmentations
 from augmentation.RawBoost import process_Rawboost_feature
-# from augmentation.RIR import RIRAugmentations
+from augmentation.RIR import RIRAugmentations
 
 
 class Augmentor:
@@ -20,7 +20,7 @@ class Augmentor:
         self.Codec = CodecAugmentations(device=self.device)
         self.General = GeneralAugmentations(device=self.device)
         self.NoiseFilter = NoiseFilterAugmentations()  # is cpu only as of now
-        # self.RIR = RIRAugmentations(rir_root, device=self.device)
+        self.RIR = RIRAugmentations(rir_root, device=self.device)
 
     def augment(self, waveform: torch.Tensor) -> torch.Tensor:
         """
@@ -53,8 +53,8 @@ class Augmentor:
                 )
                 # print(f"Applied time mask {time_mask_start} to {time_mask_start + time_mask_duration}")
 
-                # rir_intesity = random.uniform(0.2, 0.8)
-                # waveform = self.RIR.apply_rir(waveform, method="superimpose", scale_factor=rir_intesity)
+                rir_intesity = random.uniform(0.2, 0.8)
+                waveform = self.RIR.apply_rir(waveform, scale_factor=rir_intesity)
                 # print(f"Applied RIR with intensity {rir_intesity}")
 
             if apply_mu_law:
