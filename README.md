@@ -4,7 +4,7 @@
 
 **Fork contributor:** Zbyněk Lička ([pandavinci](https://github.com/pandavinci)) ilicka@vutbr.cz
 
-This repository is a fork of my colleagues Master's degree implementation. I extend it from deepfake detection to source speaker verification.
+This repository is a fork of my colleagues Master's degree implementation. I convert it from deepfake detection to source speaker verification.
 
 ## Requirements
 This repository comes with a Dockerfile:

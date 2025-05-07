@@ -120,7 +120,7 @@ class BaseFFTrainer(BaseTrainer):
         self.model.eval()  # Set model to evaluation mode
 
         with torch.no_grad():
-            losses, labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
+            labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
 
             if save_scores:
                 with open(f"./{type(self.model).__name__}_{subtitle}_scores.txt", "w") as f:
@@ -136,15 +136,6 @@ class BaseFFTrainer(BaseTrainer):
                     file_names=file_names
                 )
                 print(f"Saved embeddings to {embeddings_file}")
-            if losses:
-                val_loss = np.mean(losses).astype(float)
-            else:
-                val_loss = 0
-            # best way I could find to compute accuracy when some models return embeddings
-            try:
-                val_accuracy = np.mean(np.array(labels) == np.array(predictions)) if not self.save_embeddings else 0
-            except:
-                val_accuracy = 0
             # Skip EER calculation if any of the labels is None or all labels are the same
             if None in labels or any(map(lambda x: math.isnan(x), labels)):
                 print("Skipping EER calculation due to missing labels")
@@ -155,7 +146,7 @@ class BaseFFTrainer(BaseTrainer):
             else:
                 eer = self.calculate_EER(labels, scores, plot_det=plot_det, det_subtitle=subtitle)
 
-            return val_loss, val_accuracy, eer
+            return eer
 
     def val_epoch(
         self, val_dataloader, save_scores=False
@@ -177,10 +168,9 @@ class BaseFFTrainer(BaseTrainer):
         """
 
         # Reuse code from val() to evaluate the model on the eval set
-        eval_loss, eval_accuracy, eer = self.val(
+        eer = self.val(
             eval_dataloader, save_scores=True, plot_det=True, subtitle=subtitle
         )
-        print(f"Eval loss: {eval_loss}, eval accuracy: {eval_accuracy*100}%")
         print(f"Eval EER: {eer*100 if eer else None}%")
 
     def _plot_loss_accuracy(self, losses, accuracies, subtitle: str = ""):

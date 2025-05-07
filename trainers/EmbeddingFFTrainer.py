@@ -94,7 +94,6 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             - predictions: List of embeddings
             - file_names: List of (source_path, target_path) tuples
         """
-        losses = []
         labels = []
         scores = []  # Will store cosine distances
         predictions = []
@@ -123,4 +122,4 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 labels.extend(label.cpu().tolist())
                 scores.extend(similarities.cpu().tolist())
 
-        return losses, labels, scores, predictions, file_names
+        return labels, scores, predictions, file_names
