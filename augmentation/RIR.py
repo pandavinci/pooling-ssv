@@ -38,7 +38,6 @@ class RIRDataset:
             which_augmentation = "rir" if np.random.rand() < 0.5 else "noise"
         random_df = self.df_rir if which_augmentation == "rir" else self.df_noise
         path = os.path.join(self.rir_root, random_df.sample(1).iloc[0])
-        print(f"Loading {which_augmentation} from {path}.")
         try:
             rir, sr = torchaudio.load(path)
         except Exception as e:
