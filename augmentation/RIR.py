@@ -87,12 +87,15 @@ class RIRAugmentations:
         elif which_augmentation == "noise":
             rir = rir.squeeze()
             if len(rir) < len(waveform):
-                rir = torch.cat([rir, torch.zeros(len(waveform) - len(rir))])
+                padding = torch.zeros(len(waveform) - len(rir))
+                padding = padding.to(self.device)
+                rir = torch.cat([rir, padding])
             else:
                 rir = rir[:len(waveform)]
             rir = rir.unsqueeze(0)
             waveform = waveform.unsqueeze(0)
             scale_factor = scale_factor * torch.rand((1,))
+            scale_factor = scale_factor.to(self.device)
             wf = torchaudio.functional.add_noise(waveform, rir, scale_factor)
         wf = wf.squeeze()
         return wf
