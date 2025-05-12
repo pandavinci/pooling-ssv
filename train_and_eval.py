@@ -30,7 +30,7 @@ def main():
     if isinstance(trainer, BaseFFTrainer):
         # Default value of numepochs = 20
         trainer.train(train_dataloader, val_dataloader, numepochs=args.num_epochs)
-        trainer.eval(eval_dataloader, subtitle=str(args.num_epochs))  # Eval after training
+        #trainer.eval(eval_dataloader, subtitle=str(args.num_epochs))  # Eval after training
 
     elif isinstance(trainer, BaseSklearnTrainer):
         # Default value of variant = all
