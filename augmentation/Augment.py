@@ -72,5 +72,5 @@ class Augmentor:
             # Release GPU memory
             if self.device == "cuda":
                 torch.cuda.empty_cache()
-
-            return torch.tensor(waveform).unsqueeze(0)
+            waveform = waveform.unsqueeze(0)
+            return waveform
