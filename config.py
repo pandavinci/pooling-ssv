@@ -1,7 +1,7 @@
 local_config = {
     "argv": ["--local"],
     "data_dir": "../datasets/",
-    "rir_root": "/home/licka/Research/datasets/rirs_noises",
+    "rir_root": "../datasets/rirs_noises",
     "asvspoof2019la": {
         "train_subdir": "LA",
         "dev_subdir": "LA",
@@ -66,7 +66,7 @@ local_config = {
 metacentrum_config = {
     "argv": ["--metacentrum"],
     "data_dir": "../datasets/",
-    "rir_root": "/storage/brno2/home/pandavinci/datasets/rirs_noises",
+    "rir_root": "../datasets/rirs_noises",
     "asvspoof2019la": {
         "train_subdir": "LA19",
         "dev_subdir": "LA19",
