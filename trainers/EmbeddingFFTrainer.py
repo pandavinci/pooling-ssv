@@ -50,7 +50,6 @@ class EmbeddingFFTrainer(BaseFFTrainer):
         """
         # For accuracy computation in the epoch
         losses = []
-        accuracies = []
 
         # Training loop
         for _, wf, label in tqdm(train_dataloader):
@@ -66,15 +65,9 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             loss.backward()
             self.optimizer.step()
 
-            # Compute accuracy from the model's classifier output
-            predicted = torch.argmax(probs, 1)
-            correct = (predicted == label).sum().item()
-            accuracy = correct / len(label)
-
             losses.append(loss.item())
-            accuracies.append(accuracy)
 
-        return accuracies, losses
+        return losses
 
     def val_epoch(
         self, val_dataloader, save_scores=False

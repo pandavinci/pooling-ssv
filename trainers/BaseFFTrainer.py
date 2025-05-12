@@ -32,7 +32,6 @@ class BaseFFTrainer(BaseTrainer):
         # A statistics tracker dict for the training and validation losses, accuracies and EERs
         self.statistics = {
             "train_losses": [],
-            "train_accuracies": [],
             "val_losses": [],
             "val_accuracies": [],
             "val_eers": [],
@@ -55,19 +54,16 @@ class BaseFFTrainer(BaseTrainer):
 
             self.model.train()  # Set model to training mode
 
-            accuracies, losses = self.train_epoch(train_dataloader)
+            losses = self.train_epoch(train_dataloader)
 
             # Save epoch statistics
-            epoch_accuracy = np.mean(accuracies)
             epoch_loss = np.mean(losses)
             print(
                 f"Epoch {epoch} finished,",
-                f"training loss: {np.mean(losses)},",
-                f"training accuracy: {np.mean(accuracies)}",
+                f"training loss: {np.mean(losses)}",
             )
 
             self.statistics["train_losses"].append(epoch_loss)
-            self.statistics["train_accuracies"].append(epoch_accuracy)
 
             # Every epoch
             # plot losses and accuracy and save the model
@@ -215,7 +211,6 @@ class BaseFFTrainer(BaseTrainer):
         self.model.train()  # Set model to training mode
         self.statistics = {  # Reset statistics
             "train_losses": [],
-            "train_accuracies": [],
             "val_losses": [],
             "val_accuracies": [],
             "val_eers": [],
@@ -224,19 +219,16 @@ class BaseFFTrainer(BaseTrainer):
         for epoch in range(1, numepochs + 1):
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
-            accuracies, losses = self.train_epoch(train_dataloader)
+            losses = self.train_epoch(train_dataloader)
 
             # Save epoch statistics
-            epoch_accuracy = np.mean(accuracies)
             epoch_loss = np.mean(losses)
             print(
                 f"Finetuning epoch {epoch} finished,",
-                f"Finetuning training loss: {np.mean(losses)},",
-                f"Finetuning training accuracy: {np.mean(accuracies)}",
+                f"Finetuning training loss: {np.mean(losses)}",
             )
 
             self.statistics["train_losses"].append(epoch_loss)
-            self.statistics["train_accuracies"].append(epoch_accuracy)
 
             self.save_model(f"./{type(self.model).__name__}_finetune_{epoch}.pt")
 
