@@ -88,14 +88,14 @@ class SpeakerFilterBlock(nn.Module, BaseFilter):
 
         # 3. Mask Generation
         # lstm_input_features: (B, T, C, 2*F) - concatenate along feature_size dimension (F)
+        # This concatenation can be a major memory allocation if inputs are large.
         lstm_input_features = torch.cat((orthogonal_vc, converted_features), dim=3)
         
         # Reshape for LSTM: LSTM expects (seq_len, batch_overall, num_features)
         # Here, seq_len = T, batch_overall = B*C, num_features = 2*F
         # Current shape: (B, T, C, 2*F)
-        # Permute to (T, B, C, 2*F)
-        lstm_input_reshaped = lstm_input_features.permute(1, 0, 2, 3)
-        # Reshape to (T, B*C, 2*F)
+        # Permute to (T, B, C, 2*F), make contiguous, then reshape.
+        lstm_input_reshaped = lstm_input_features.permute(1, 0, 2, 3).contiguous()
         lstm_input_reshaped = lstm_input_reshaped.reshape(T, B * C, 2 * self.feature_size)
         
         # lstm_out: (T, B*C, lstm_hidden_size*2)
@@ -107,10 +107,9 @@ class SpeakerFilterBlock(nn.Module, BaseFilter):
         
         # Reshape LSTM output back: (B, T, C, lstm_hidden_size*2)
         # Current shape: (T, B*C, H*2)
-        # Reshape to (T, B, C, H*2)
+        # Reshape to (T, B, C, H*2), make contiguous, then permute.
         lstm_out_reshaped = lstm_out.reshape(T, B, C, self.lstm_hidden_size * 2)
-        # Permute to (B, T, C, H*2)
-        mask_fc_input = lstm_out_reshaped.permute(1, 0, 2, 3)
+        mask_fc_input = lstm_out_reshaped.permute(1, 0, 2, 3).contiguous()
 
         # mask_logits: (B, T, C, F)
         mask_logits = self.fc_mask(mask_fc_input)

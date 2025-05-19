@@ -6,7 +6,7 @@ class FFBase(nn.Module):
     Base class for feedforward classifiers, inherited by FFConcatBase and FFDiffBase.
     """
 
-    def __init__(self, extractor, feature_processor, in_dim=1024, num_classes=2):
+    def __init__(self, extractor, feature_processor, loss_fn, in_dim=1024, num_classes=2):
         """
         Initialize the model.
 
@@ -46,6 +46,8 @@ class FFBase(nn.Module):
             self.feature_layers,
             self.final_classifier
         )
+
+        self.loss_fn = loss_fn
 
     def get_embeddings(self, x):
         """

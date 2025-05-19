@@ -16,17 +16,16 @@ class EmbeddingFFTrainer(BaseFFTrainer):
     """
     
     def __init__(
-        self, model: EmbeddingFF, lossfn, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False
+        self, model: EmbeddingFF, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False
     ):
         """
         Initialize the trainer for embedding-based models and losses.
         
         Args:
             model: The model to train (must be EmbeddingFF or similar that returns processed embeddings)
-            lossfn: The loss function to use (must operate on embeddings)
             device: The device to use for training
         """
-        super().__init__(model, lossfn, device, save_embeddings)
+        super().__init__(model, device, save_embeddings)
         
         # Validate that the model returns embeddings
         self.model.eval()
@@ -61,7 +60,7 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             logits, probs, processed_embeddings = self.model(wf)
 
             # Use processed embeddings with the loss function
-            loss = self.lossfn(processed_embeddings, label.long())
+            loss = self.model.loss_fn(processed_embeddings, label.long())
             loss.backward()
             self.optimizer.step()
 

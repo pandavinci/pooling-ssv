@@ -511,10 +511,10 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
             try:
                 # Users must explicitly choose EmbeddingFF if they want to use embedding-based losses
                 model = CLASSIFIERS[str(args.classifier)][0](
-                    extractor, processor, in_dim=extractor.feature_size, num_classes=num_classes
+                    extractor, processor, loss_fn=loss_fn, in_dim=extractor.feature_size, num_classes=num_classes
                 )
                 trainer_class = TRAINERS[str(args.classifier)]
-                trainer = trainer_class(model, loss_fn, save_embeddings=args.save_embeddings)
+                trainer = trainer_class(model, save_embeddings=args.save_embeddings)
             except KeyError:
                 raise ValueError(f"Invalid classifier, should be one of: {list(CLASSIFIERS.keys())}")
     # endregion

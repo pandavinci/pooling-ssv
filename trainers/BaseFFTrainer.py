@@ -10,11 +10,9 @@ from losses.CrossEntropyLoss import CrossEntropyLoss as CustomCrossEntropyLoss
 
 # This is the base class for all trainers - use this if you aren't experimenting with new approaches
 class BaseFFTrainer(BaseTrainer):
-    def __init__(self, model, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False):
+    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False):
         super().__init__(model, device)
 
-        # Use provided loss function or default to CrossEntropyLoss
-        self.lossfn = loss_fn if loss_fn is not None else CustomCrossEntropyLoss()
         self.optimizer = torch.optim.Adam(
             model.parameters()
         )  # Can play with lr and weight_decay for regularization
@@ -26,8 +24,8 @@ class BaseFFTrainer(BaseTrainer):
             os.makedirs("embeddings", exist_ok=True)
         
         # Move loss function to the correct device if it has parameters
-        if hasattr(self.lossfn, 'to') and callable(getattr(self.lossfn, 'to')):
-            self.lossfn = self.lossfn.to(device)
+        if hasattr(self.model.loss_fn, 'to') and callable(getattr(self.model.loss_fn, 'to')):
+            self.model.loss_fn = self.model.loss_fn.to(device)
 
         # A statistics tracker dict for the training and validation losses, accuracies and EERs
         self.statistics = {

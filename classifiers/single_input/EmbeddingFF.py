@@ -10,7 +10,7 @@ class EmbeddingFF(FFBase):
     embeddings from the feature processor rather than the final classifier output.
     """
 
-    def __init__(self, extractor, feature_processor, in_dim=1024, num_classes=2):
+    def __init__(self, extractor, feature_processor, loss_fn, in_dim=1024, num_classes=2):
         """
         Initialize the model.
 
@@ -22,7 +22,7 @@ class EmbeddingFF(FFBase):
         param num_classes: Number of output classes (default: 2)
         """
 
-        super().__init__(extractor, feature_processor, in_dim=in_dim, num_classes=num_classes)
+        super().__init__(extractor, feature_processor, loss_fn, in_dim=in_dim, num_classes=num_classes)
 
     def forward(self, waveforms):
         """
