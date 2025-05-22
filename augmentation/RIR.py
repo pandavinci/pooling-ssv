@@ -74,11 +74,15 @@ class RIRAugmentations:
         param scale_factor: The scale factor to apply to the RIR, should be between 0.2 and 0.8.
 
         return: The audio waveform with the RIR applied.
+
+        NOTE: RIR is moved to the device after it is shortened to avoid memory issues.
         """
         waveform = waveform.to(self.device)
         rir, which_augmentation = self.rir_dataset.get_random_rir(which_augmentation)
-        rir = rir.to(self.device)
         if which_augmentation == "rir":
+            if len(rir) > len(waveform):
+                rir = rir[:len(waveform)]
+            rir = rir.to(self.device)
             rir = rir / torch.linalg.vector_norm(rir, ord=2)
             rir = rir.squeeze()
             T = waveform.shape[-1]
@@ -87,11 +91,13 @@ class RIRAugmentations:
         elif which_augmentation == "noise":
             rir = rir.squeeze()
             if len(rir) < len(waveform):
+                rir = rir.to(self.device)
                 padding = torch.zeros(len(waveform) - len(rir))
                 padding = padding.to(self.device)
                 rir = torch.cat([rir, padding])
             else:
                 rir = rir[:len(waveform)]
+                rir = rir.to(self.device)
             rir = rir.unsqueeze(0)
             waveform = waveform.unsqueeze(0)
             scale_factor = scale_factor * torch.rand((1,))
