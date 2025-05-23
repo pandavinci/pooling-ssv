@@ -71,7 +71,7 @@ class BaseFFTrainer(BaseTrainer):
             #     self.statistics["train_accuracies"],
             #     f"Training epoch {epoch}",
             # )
-            self.save_model(f"./{type(self.model).__name__}_{epoch}.pt")
+            self.save_model(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{epoch}.pt")
 
             # Validation
             epochs_to_val = 1
@@ -117,13 +117,14 @@ class BaseFFTrainer(BaseTrainer):
             labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
 
             if save_scores:
-                with open(f"./{type(self.model).__name__}_{subtitle}_scores.txt", "w") as f:
+                os.makedirs("scores", exist_ok=True)
+                with open(f"scores/{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_scores.txt", "w") as f:
                     for file_name, score, label in zip(file_names, scores, labels):
                         f.write(f"{file_name},{score},{'nan' if math.isnan(label) else int(label)}\n")
 
             if self.save_embeddings and predictions:
                 embeddings = np.array(predictions)
-                embeddings_file = f"embeddings/{type(self.model).__name__}_{subtitle}_embeddings.npz"
+                embeddings_file = f"embeddings/{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_embeddings.npz"
                 np.savez_compressed(
                     embeddings_file,
                     embeddings=embeddings,
@@ -175,10 +176,10 @@ class BaseFFTrainer(BaseTrainer):
         plt.plot(losses, label="Loss")
         plt.plot(accuracies, label="Accuracy")
         plt.legend()
-        plt.title(f"{type(self.model).__name__} Loss and Accuracy" + f" - {subtitle}" if subtitle else "")
+        plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} Loss and Accuracy" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("Loss/Accuracy")
-        plt.savefig(f"./{type(self.model).__name__}_loss_acc_{subtitle}.png")
+        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_acc_{subtitle}.png")
 
     def _plot_eer(self, eers, subtitle: str = ""):
         """
@@ -187,10 +188,10 @@ class BaseFFTrainer(BaseTrainer):
         plt.figure(figsize=(12, 6))
         plt.plot(eers, label="EER")
         plt.legend()
-        plt.title(f"{type(self.model).__name__} EER" + f" - {subtitle}" if subtitle else "")
+        plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} EER" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("EER")
-        plt.savefig(f"./{type(self.model).__name__}_EER_{subtitle}.png")
+        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png")
 
     def finetune(self, train_dataloader, val_dataloader, numepochs=5, finetune_ssl=False):
         """
@@ -228,7 +229,7 @@ class BaseFFTrainer(BaseTrainer):
 
             self.statistics["train_losses"].append(epoch_loss)
 
-            self.save_model(f"./{type(self.model).__name__}_finetune_{epoch}.pt")
+            self.save_model(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_finetune_{epoch}.pt")
 
             epochs_to_val = 1  # Validate every epoch
             if epoch % epochs_to_val == 0:

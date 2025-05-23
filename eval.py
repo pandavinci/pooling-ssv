@@ -27,6 +27,10 @@ def main():
     model, trainer = build_model(args, eval_dataloader.dataset.num_speakers)
 
     print(f"Trainer: {type(trainer).__name__}")
+    print(f"Model: {type(model).__name__}")
+    print(f"Extractor: {type(model.extractor).__name__}")
+    print(f"Feature Processor: {type(model.feature_processor).__name__}")
+    print(f"Dataset: {type(eval_dataloader.dataset).__name__}")
 
     # Load the model from the checkpoint
     if args.checkpoint:
@@ -38,8 +42,8 @@ def main():
         f"Evaluating {args.checkpoint} {type(model).__name__} on "
         + f"{type(eval_dataloader.dataset).__name__} dataloader."
     )
-
-    trainer.eval(eval_dataloader, subtitle=str(args.checkpoint))
+    subtitle = str(args.checkpoint).split("/")[-1]
+    trainer.eval(eval_dataloader, subtitle=subtitle)
 
 
 if __name__ == "__main__":
