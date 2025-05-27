@@ -24,7 +24,11 @@ def main():
     model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
     # TODO: Implement training of MHFA and AASIST with SkLearn models
 
-    print(f"Training on {type(train_dataloader.dataset).__name__} dataloader.")
+    print(f"Trainer: {type(trainer).__name__}")
+    print(f"Model: {type(model).__name__}")
+    print(f"Extractor: {type(model.extractor).__name__}")
+    print(f"Feature Processor: {type(model.feature_processor).__name__}")
+    print(f"Dataset: {type(train_dataloader.dataset).__name__}")
 
     # Train the model
     if isinstance(trainer, BaseFFTrainer):
