@@ -48,13 +48,6 @@ class FFBase(nn.Module):
         )
 
         self.loss_fn = loss_fn
-
-    def get_embeddings(self, x):
-        """
-        Get embeddings from the penultimate layer (before classification)
-        Used for metric learning losses like AAM
-        """
-        return self.feature_layers(x)
         
     def forward(self, input_gt, input_tested):
         raise NotImplementedError("Forward pass not implemented in the base class.")

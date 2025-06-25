@@ -30,8 +30,6 @@ class BaseFFTrainer(BaseTrainer):
         # A statistics tracker dict for the training and validation losses, accuracies and EERs
         self.statistics = {
             "train_losses": [],
-            "val_losses": [],
-            "val_accuracies": [],
             "val_eers": [],
         }
 
@@ -66,29 +64,20 @@ class BaseFFTrainer(BaseTrainer):
             # Every epoch
             # plot losses and accuracy and save the model
             # validate on the validation set (incl. computing EER)
-            # self._plot_loss_accuracy(
-            #     self.statistics["train_losses"],
-            #     self.statistics["train_accuracies"],
-            #     f"Training epoch {epoch}",
-            # )
+            self._plot_loss(
+                self.statistics["train_losses"],
+                f"Training epoch {epoch}",
+            )
             self.save_model(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{epoch}.pt")
 
             # Validation
             epochs_to_val = 1
             if epoch % epochs_to_val == 0:
-                val_loss, val_accuracy, eer = self.val(val_dataloader)
-                print(f"Validation loss: {val_loss}, validation accuracy: {val_accuracy*100}%")
+                eer = self.val(val_dataloader)
                 print(f"Validation EER: " + "None" if eer == None else f"{eer*100}%")
-                self.statistics["val_losses"].append(val_loss)
-                self.statistics["val_accuracies"].append(val_accuracy)
                 self.statistics["val_eers"].append(eer)
 
-            # TODO: Enable early stopping based on validation accuracy/loss/EER
-
-        # self._plot_loss_accuracy(
-        #     self.statistics["val_losses"], self.statistics["val_accuracies"], "Validation"
-        # )
-        # self._plot_eer(self.statistics["val_eers"], "Validation")
+        self._plot_eer(self.statistics["val_eers"], "Validation")
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         """
@@ -168,18 +157,17 @@ class BaseFFTrainer(BaseTrainer):
         )
         print(f"Eval EER: {eer*100 if eer else None}%")
 
-    def _plot_loss_accuracy(self, losses, accuracies, subtitle: str = ""):
+    def _plot_loss(self, losses, subtitle: str = ""):
         """
-        Plot the loss and accuracy and save the graph to a file
+        Plot the loss and save the graph to a file
         """
         plt.figure(figsize=(12, 6))
         plt.plot(losses, label="Loss")
-        plt.plot(accuracies, label="Accuracy")
         plt.legend()
-        plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} Loss and Accuracy" + f" - {subtitle}" if subtitle else "")
+        plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} Loss" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
-        plt.ylabel("Loss/Accuracy")
-        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_acc_{subtitle}.png")
+        plt.ylabel("Loss")
+        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png")
 
     def _plot_eer(self, eers, subtitle: str = ""):
         """
@@ -193,7 +181,7 @@ class BaseFFTrainer(BaseTrainer):
         plt.ylabel("EER")
         plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png")
 
-    def finetune(self, train_dataloader, val_dataloader, numepochs=5, finetune_ssl=False):
+    def finetune(self, train_dataloader, val_dataloader, numepochs=5, finetune_ssl=False, start_epoch=1):
         """
         Fine-tune the model on the given dataloader for the given number of epochs.
         TODO: Maybe do finetuning based on steps instead of epochs?
@@ -208,14 +196,8 @@ class BaseFFTrainer(BaseTrainer):
         # Use the optimizer but with a smaller learning rate
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-6)
         self.model.train()  # Set model to training mode
-        self.statistics = {  # Reset statistics
-            "train_losses": [],
-            "val_losses": [],
-            "val_accuracies": [],
-            "val_eers": [],
-        }
 
-        for epoch in range(1, numepochs + 1):
+        for epoch in range(start_epoch, start_epoch + numepochs):
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
             losses = self.train_epoch(train_dataloader)
@@ -233,14 +215,8 @@ class BaseFFTrainer(BaseTrainer):
 
             epochs_to_val = 1  # Validate every epoch
             if epoch % epochs_to_val == 0:
-                val_loss, val_accuracy, eer = self.val(val_dataloader)
-                print(f"Validation loss: {val_loss}, validation accuracy: {val_accuracy*100}%")
+                eer = self.val(val_dataloader)
                 print(f"Validation EER: " + "None" if eer == None else f"{eer*100}%")
-                self.statistics["val_losses"].append(val_loss)
-                self.statistics["val_accuracies"].append(val_accuracy)
                 self.statistics["val_eers"].append(eer)
 
         self._plot_eer(self.statistics["val_eers"], "Finetuning EER")
-        self._plot_loss_accuracy(
-            self.statistics["val_losses"], self.statistics["val_accuracies"], "Finetuning Loss & Accuracy"
-        )

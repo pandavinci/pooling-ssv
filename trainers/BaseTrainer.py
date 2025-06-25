@@ -1,5 +1,7 @@
 import torch
 import os
+import yaml
+from wespeaker.models import get_speaker_model, load_checkpoint
 
 from .utils import calculate_EER
 
@@ -34,7 +36,17 @@ class BaseTrainer:
         param path: Path to load the model from
         """
         try:
-            self.model.load_state_dict(torch.load(path, map_location=self.device))
+            if 'ResNet' in self.model.name:
+                config_path = os.path.join(path, 'config.yaml')
+                model_path = os.path.join(path, 'model.pt')
+                with open(config_path, 'r') as fin:
+                    configs = yaml.load(fin, Loader=yaml.FullLoader)
+                self.model = get_speaker_model(
+                    configs['model'])(**configs['model_args'])
+                load_checkpoint(self.model, model_path)
+            else:
+                self.model.load_state_dict(torch.load(path, map_location=self.device))
+
         except FileNotFoundError:
             raise
         except:  # Path correct, but not a PyTorch model

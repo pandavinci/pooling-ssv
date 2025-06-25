@@ -39,12 +39,14 @@ from extractors.HuBERT import HuBERT_base, HuBERT_extralarge, HuBERT_large
 from extractors.Wav2Vec2 import Wav2Vec2_base, Wav2Vec2_large, Wav2Vec2_LV60k
 from extractors.WavLM import WavLM_base, WavLM_baseplus, WavLM_large
 from extractors.XLSR import XLSR_1B, XLSR_2B, XLSR_300M
+from extractors.MelSpectrogram import MelSpectrogram
 
 # Feature processors
 from feature_processors.AASIST import AASIST
 from feature_processors.MeanProcessor import MeanProcessor
 from feature_processors.MHFA import MHFA
 from feature_processors.SLS import SLS
+from feature_processors.ResNet import ResNet293
 
 # Trainers
 from trainers.BaseTrainer import BaseTrainer
@@ -77,6 +79,7 @@ EXTRACTORS: dict[str, type] = {
     "XLSR_300M": XLSR_300M,
     "XLSR_1B": XLSR_1B,
     "XLSR_2B": XLSR_2B,
+    "MelSpectrogram": MelSpectrogram,
 }
 
 CLASSIFIERS: Dict[str, Tuple[type, Dict[str, type]]] = {
@@ -451,6 +454,11 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         )
     elif args.processor == "Mean":
         processor = MeanProcessor()  # default avg pooling along the transformer layers and time frames
+    elif args.processor == "ResNet293":
+        processor = ResNet293(
+            input_dim=extractor.feature_size,
+            output_dim=extractor.feature_size,
+        )
     else:
         raise ValueError("Only AASIST, MHFA, Mean and SLS processors are currently supported.")
     # endregion
