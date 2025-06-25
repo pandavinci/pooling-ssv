@@ -146,6 +146,14 @@ def parse_args():
     )
 
     classifier_args.add_argument(
+        "-se",
+        "--start_epoch",
+        type=int,
+        help="Number of epochs to start training from. Does not concern SkLearn classifiers.",
+        default=1,
+    )
+
+    classifier_args.add_argument(
         "--sampling",
         type=str,
         help="Variant of sampling the data for training SkLearn mocels. One of: all, avg_pool, random_sample.",
