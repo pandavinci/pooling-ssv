@@ -14,7 +14,6 @@ from classifiers.differential.GMMDiff import GMMDiff
 from classifiers.differential.LDAGaussianDiff import LDAGaussianDiff
 from classifiers.differential.SVMDiff import SVMDiff
 from classifiers.FFBase import FFBase
-from classifiers.single_input.FF import FF
 from classifiers.single_input.EmbeddingFF import EmbeddingFF
 
 # Config
