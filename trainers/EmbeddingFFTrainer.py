@@ -79,16 +79,16 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             save_scores: Whether to save the scores
             
         Returns:
-            Tuple(losses, predictions, labels, scores, file_names)
+            Tuple(losses, embeddings, labels, scores, file_names)
             - losses: List of loss values
             - labels: List of ground truth labels (1 for same speaker, 0 for different)
             - scores: List of cosine distances
-            - predictions: List of embeddings
+            - embeddings: List of embeddings
             - file_names: List of (source_path, target_path) tuples
         """
         labels = []
         scores = []  # Will store cosine distances
-        predictions = []
+        embeddings = []
         file_names = []
 
         self.model.eval()
@@ -106,7 +106,7 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 # Compute cosine similarity
                 similarities = cosine_similarity(source_embeddings, target_embeddings)
 
-                predictions.extend(source_embeddings.cpu().tolist())
+                embeddings.extend(source_embeddings.cpu().tolist())
 
                 if save_scores:
                     file_names.extend(list(zip(source_paths, target_paths)))
@@ -114,4 +114,4 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 labels.extend(label.cpu().tolist())
                 scores.extend(similarities.cpu().tolist())
 
-        return labels, scores, predictions, file_names
+        return labels, scores, embeddings, file_names
