@@ -6,3 +6,5 @@ tqdm
 audiomentations
 safe-gpu
 pydub
+git+https://github.com/wenet-e2e/wespeaker.git
+pyyaml

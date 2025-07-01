@@ -1,7 +1,8 @@
 import torch
 import os
 import yaml
-from wespeaker.models import get_speaker_model, load_checkpoint
+from wespeaker.utils.checkpoint import load_checkpoint
+from wespeaker.models.speaker_model import get_speaker_model
 
 from .utils import calculate_EER
 
