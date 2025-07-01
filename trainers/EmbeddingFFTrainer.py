@@ -26,18 +26,6 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             device: The device to use for training
         """
         super().__init__(model, device, save_embeddings)
-        
-        # Validate that the model returns embeddings
-        self.model.eval()
-        with torch.no_grad():
-            dummy_input = torch.zeros(1, 16000).to(device)  # Small dummy input
-            outputs = self.model(dummy_input)
-            if len(outputs) != 3:
-                raise ValueError(
-                    "Model must return a tuple of (logits, probs, processed_embeddings) "
-                    f"but got {len(outputs)} outputs instead"
-                )
-        self.model.train()
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         """
