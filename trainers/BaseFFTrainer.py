@@ -24,8 +24,8 @@ class BaseFFTrainer(BaseTrainer):
             os.makedirs("embeddings", exist_ok=True)
         
         # Move loss function to the correct device if it has parameters
-        if hasattr(self.model.loss_fn, 'to') and callable(getattr(self.model.loss_fn, 'to')):
-            self.model.loss_fn = self.model.loss_fn.to(device)
+        #if hasattr(self.model.loss_fn, 'to') and callable(getattr(self.model.loss_fn, 'to')):
+        #    self.model.loss_fn = self.model.loss_fn.to(device)
 
         # A statistics tracker dict for the training and validation losses, accuracies and EERs
         self.statistics = {
@@ -48,7 +48,7 @@ class BaseFFTrainer(BaseTrainer):
         for epoch in range(start_epoch, start_epoch + numepochs):  # 1-indexed epochs
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
-            self.model.train()  # Set model to training mode
+            #self.model.train()  # Set model to training mode
 
             losses = self.train_epoch(train_dataloader)
 
@@ -56,7 +56,7 @@ class BaseFFTrainer(BaseTrainer):
             epoch_loss = np.mean(losses)
             print(
                 f"Epoch {epoch} finished,",
-                f"training loss: {np.mean(losses)}",
+                f"training loss: {epoch_loss}",
             )
 
             self.statistics["train_losses"].append(epoch_loss)
@@ -206,7 +206,7 @@ class BaseFFTrainer(BaseTrainer):
             epoch_loss = np.mean(losses)
             print(
                 f"Finetuning epoch {epoch} finished,",
-                f"Finetuning training loss: {np.mean(losses)}",
+                f"Finetuning training loss: {epoch_loss}",
             )
 
             self.statistics["train_losses"].append(epoch_loss)
