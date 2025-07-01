@@ -51,7 +51,6 @@ from feature_processors.ResNet import ResNet293
 from trainers.BaseTrainer import BaseTrainer
 from trainers.FFDotTrainer import FFDotTrainer
 from trainers.FFPairTrainer import FFPairTrainer
-from trainers.FFTrainer import FFTrainer
 from trainers.EmbeddingFFTrainer import EmbeddingFFTrainer
 from trainers.GMMDiffTrainer import GMMDiffTrainer
 from trainers.LDAGaussianDiffTrainer import LDAGaussianDiffTrainer
@@ -104,7 +103,6 @@ EMBEDDING_COMPATIBLE_CLASSIFIERS = [
 ]
 
 TRAINERS = {  # Maps the classifier to the trainer
-    "FF": FFTrainer,
     "EmbeddingFF": EmbeddingFFTrainer,
     "FFConcat1": FFPairTrainer,
     "FFConcat2": FFPairTrainer,
