@@ -37,7 +37,7 @@ class BaseTrainer:
         param path: Path to load the model from
         """
         try:
-            if 'ResNet' in self.model.name:
+            if 'ResNet' in self.model.feature_processor.__class__.__name__:
                 config_path = os.path.join(path, 'config.yaml')
                 model_path = os.path.join(path, 'model.pt')
                 with open(config_path, 'r') as fin:
