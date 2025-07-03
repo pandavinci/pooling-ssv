@@ -22,6 +22,10 @@ def main():
     )
 
     model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
+
+    if args.checkpoint:
+        trainer.load_model(args.checkpoint)
+
     # TODO: Implement training of MHFA and AASIST with SkLearn models
 
     print(f"Trainer: {type(trainer).__name__}")
