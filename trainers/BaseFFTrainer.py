@@ -33,7 +33,7 @@ class BaseFFTrainer(BaseTrainer):
             "val_eers": [],
         }
 
-    def train(self, train_dataloader, val_dataloader, numepochs=20, start_epoch=1):
+    def train(self, train_dataloader, val_dataloader, numepochs=20, start_epoch=0):
         """
         Common training loop
 
@@ -45,7 +45,7 @@ class BaseFFTrainer(BaseTrainer):
         param numepochs: Number of epochs to train for
         param start_epoch: Epoch to start from (1-indexed)
         """
-        for epoch in range(start_epoch, start_epoch + numepochs):  # 1-indexed epochs
+        for epoch in range(start_epoch+1, start_epoch + numepochs + 1):  # 1-indexed epochs
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
             #self.model.train()  # Set model to training mode
@@ -99,9 +99,6 @@ class BaseFFTrainer(BaseTrainer):
 
         return: Tuple(loss, accuracy, EER)
         """
-
-        self.model.eval()  # Set model to evaluation mode
-
         with torch.no_grad():
             labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
 
@@ -195,9 +192,8 @@ class BaseFFTrainer(BaseTrainer):
         self.model.extractor.finetune = finetune_ssl
         # Use the optimizer but with a smaller learning rate
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-6)
-        self.model.train()  # Set model to training mode
 
-        for epoch in range(start_epoch, start_epoch + numepochs):
+        for epoch in range(start_epoch+1, start_epoch + numepochs + 1):
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
             losses = self.train_epoch(train_dataloader)
