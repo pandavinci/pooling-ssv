@@ -45,6 +45,7 @@ class BaseFFTrainer(BaseTrainer):
         param numepochs: Number of epochs to train for
         param start_epoch: Epoch to start from (1-indexed)
         """
+        self.model.train()
         for epoch in range(start_epoch+1, start_epoch + numepochs + 1):  # 1-indexed epochs
             print(f"Starting epoch {epoch} with {len(train_dataloader)} batches")
 
@@ -99,6 +100,7 @@ class BaseFFTrainer(BaseTrainer):
 
         return: Tuple(loss, accuracy, EER)
         """
+        self.model.eval()
         with torch.no_grad():
             labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
 
@@ -189,6 +191,7 @@ class BaseFFTrainer(BaseTrainer):
         param finetune_ssl: Whether to fine-tune the SSL extractor
         """
 
+        self.model.train()
         self.model.extractor.finetune = finetune_ssl
         # Use the optimizer but with a smaller learning rate
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-6)
