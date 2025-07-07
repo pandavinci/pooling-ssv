@@ -8,6 +8,7 @@ from augmentation.NoiseFilter import NoiseFilterAugmentations
 from augmentation.RawBoost import process_Rawboost_feature
 from augmentation.RIR import RIRAugmentations
 
+import gc # for memory management
 
 class Augmentor:
     """
@@ -71,6 +72,7 @@ class Augmentor:
 
             # Release GPU memory
             if self.device == "cuda":
+                gc.collect()
                 torch.cuda.empty_cache()
-            waveform = waveform.unsqueeze(0)
+            waveform = waveform.unsqueeze(0).cpu().detach()
             return waveform
