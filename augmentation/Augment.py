@@ -37,6 +37,7 @@ class Augmentor:
             apply_noise_filter: bool = random.random() < 0.3  # 30% chance of applying noise augmentations
 
             waveform = waveform.squeeze()
+            waveform = waveform.to(self.device)
 
             if trim_starting_silence:  # 50% chance of removing the starting silence
                 trimmed_waveform = self.General.trim_starting_silence(waveform)
@@ -70,9 +71,9 @@ class Augmentor:
                 waveform = self.NoiseFilter.apply_noise_filter(waveform)
                 # print("Applied noise filter")
 
+            waveform = waveform.unsqueeze(0).cpu().detach()
             # Release GPU memory
             if self.device == "cuda":
                 gc.collect()
                 torch.cuda.empty_cache()
-            waveform = waveform.unsqueeze(0).cpu().detach()
             return waveform

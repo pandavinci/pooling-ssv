@@ -26,7 +26,7 @@ class CodecAugmentations:
 
         return: The audio waveform with mu-law compression and decompression applied.
         """
-        waveform = waveform.to(self.device)
+        waveform = waveform
         enc = self.mu_encoder(waveform)
         dec = self.mu_decoder(enc)
         return dec
@@ -43,7 +43,7 @@ class CodecAugmentations:
         return: The audio waveform with MP3 compression applied.
         """
         # Convert tensor to numpy array
-        waveform_np = waveform.to(self.device).numpy()
+        waveform_np = waveform.numpy()
         
         # Apply MP3 compression
         augmented_waveform = self.mp3_compression(
