@@ -45,7 +45,7 @@ class RIRDataset:
             raise e
         if rir.size(0) > 1:
             rir = rir.mean(0)
-        return rir, which_augmentation, rir_path
+        return rir, which_augmentation, path
 
 
 class RIRAugmentations:
