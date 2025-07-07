@@ -45,7 +45,7 @@ class RIRDataset:
             raise e
         if rir.size(0) > 1:
             rir = rir.mean(0)
-        return rir, which_augmentation
+        return rir, which_augmentation, rir_path
 
 
 class RIRAugmentations:
@@ -78,7 +78,7 @@ class RIRAugmentations:
         NOTE: RIR is moved to the device after it is shortened to avoid memory issues.
         """
         waveform = waveform.to(self.device)
-        rir, which_augmentation = self.rir_dataset.get_random_rir(which_augmentation)
+        rir, which_augmentation, rir_path = self.rir_dataset.get_random_rir(which_augmentation)
         with torch.no_grad():
             if which_augmentation == "rir":
                 if len(rir) > len(waveform):
@@ -87,7 +87,11 @@ class RIRAugmentations:
                 rir = rir / torch.linalg.vector_norm(rir, ord=2)
                 rir = rir.squeeze()
                 T = waveform.shape[-1]
-                wf = torchaudio.functional.fftconvolve(waveform, rir)
+                try:
+                    wf = torchaudio.functional.fftconvolve(waveform, rir)
+                except Exception as e:
+                    print(f"Failed to apply RIR from {rir_path}.")
+                    return waveform
                 wf = wf[..., :T]
             elif which_augmentation == "noise":
                 rir = rir.squeeze()
