@@ -92,7 +92,7 @@ class RIRAugmentations:
                 except Exception as e:
                     print(f"Failed to apply RIR from {rir_path}.")
                     return waveform
-                waveform = wf[..., :T]
+                waveform = waveform[..., :T]
             elif which_augmentation == "noise":
                 rir = rir.squeeze()
                 if len(rir) < len(waveform):
