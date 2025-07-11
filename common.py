@@ -282,6 +282,8 @@ def get_deepfake_dataloader(
             collate_fn=collate_func,
             sampler=weighted_sampler,
             drop_last=True,
+            num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
+            persistent_workers=False,
         )
         val_dataloader = DataLoader(
             val_dataset,
@@ -289,6 +291,8 @@ def get_deepfake_dataloader(
             collate_fn=collate_func,
             shuffle=True,
             drop_last=True,
+            num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
+            persistent_workers=False,
         )
 
     print("Loading eval dataset...")
@@ -307,6 +311,8 @@ def get_deepfake_dataloader(
         batch_size=bs,
         collate_fn=collate_func,
         shuffle=True,
+        num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
+        persistent_workers=False,
     )
 
     if eval_only:
@@ -374,6 +380,8 @@ def get_speaker_verification_dataloader(
         collate_fn=collate_func,
         sampler=weighted_sampler,
         drop_last=True,
+        num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
+        persistent_workers=False,
     )
     if not eval_only:
         val_dataloader = DataLoader(
@@ -400,6 +408,8 @@ def get_speaker_verification_dataloader(
         batch_size=bs,
         collate_fn=collate_func_eval,
         shuffle=True,
+        num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
+        persistent_workers=False,
     )
 
     if eval_only:
