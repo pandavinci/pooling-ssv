@@ -48,7 +48,7 @@ class EmbeddingFF(FFBase):
         processed_embeddings = self.feature_processor(raw_embs)
         
         # Get logits and probabilities for classification
-        out = self.classifier(processed_embeddings)
-        prob = F.softmax(out, dim=1)
+        #out = self.classifier(processed_embeddings)
+        #prob = F.softmax(out, dim=1)
 
-        return out, prob, processed_embeddings
+        return processed_embeddings

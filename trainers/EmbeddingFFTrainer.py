@@ -65,7 +65,7 @@ class EmbeddingFFTrainer(BaseFFTrainer):
             # Forward pass
             self.optimizer.zero_grad()
             #with record_function("### forward ###"):
-            logits, probs, processed_embeddings = self.model(wf)
+            processed_embeddings = self.model(wf)
 
             # Use processed embeddings with the loss function
             #with record_function("### loss ###"):
