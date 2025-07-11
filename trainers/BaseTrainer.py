@@ -1,8 +1,8 @@
 import torch
 import os
 import yaml
-from wespeaker.utils.checkpoint import load_checkpoint
-from wespeaker.models.speaker_model import get_speaker_model
+""" from wespeaker.utils.checkpoint import load_checkpoint
+from wespeaker.models.speaker_model import get_speaker_model """
 
 from .utils import calculate_EER
 
@@ -38,13 +38,13 @@ class BaseTrainer:
         """
         try:
             if 'ResNet' in self.model.feature_processor.__class__.__name__:
-                config_path = os.path.join(path, 'config.yaml')
+                """ config_path = os.path.join(path, 'config.yaml')
                 model_path = os.path.join(path, 'model.pt')
                 with open(config_path, 'r') as fin:
                     configs = yaml.load(fin, Loader=yaml.FullLoader)
                 self.model = get_speaker_model(
                     configs['model'])(**configs['model_args'])
-                load_checkpoint(self.model, model_path)
+                load_checkpoint(self.model, model_path) """
             else:
                 self.model.load_state_dict(torch.load(path, map_location=self.device))
 
