@@ -3,6 +3,12 @@ from sklearn.metrics import det_curve, DetCurveDisplay
 import numpy as np
 import matplotlib.pyplot as plt
 
+import torch
+
+def trace_handler(prof: torch.profiler.profile):
+   prof.export_chrome_trace(f"trace.json.gz")
+   prof.export_memory_timeline(f"memory.html", device="cuda:0")
+
 def calculate_EER(name, labels, predictions, plot_det: bool, det_subtitle: str) -> float:
         """
         Calculate the Equal Error Rate (EER) from the labels and predictions

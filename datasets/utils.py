@@ -11,7 +11,7 @@ def custom_pair_batch_create(batch: list):
     
     # Free unused memory before creating the new batch
     # This is necessary because PyTorch has trouble with dataloader memory management
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and torch.rand(1).item() < 0.05:  # 5% chance
         torch.cuda.empty_cache()
 
     # Get the lengths of all tensors in the batch
@@ -58,7 +58,7 @@ def custom_single_batch_create(batch: list):
     """
     # Free unused memory before creating the new batch
     # This is necessary because PyTorch has trouble with dataloader memory management
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and torch.rand(1).item() < 0.05:  # 5% chance
         torch.cuda.empty_cache()
 
     # Get the lengths of all tensors in the batch
@@ -95,7 +95,7 @@ def custom_eval_batch_create(batch: list):
     Shorter waveforms are padded with zeros to match the length of the longest waveform in the batch.
     """
     # Free unused memory before creating the new batch
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and torch.rand(1).item() < 0.05:  # 5% chance
         torch.cuda.empty_cache()
 
     # Get the lengths of all tensors in the batch
