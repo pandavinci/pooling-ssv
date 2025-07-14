@@ -35,7 +35,7 @@ class RIRDataset:
 
     def get_random_rir(self, which_augmentation: Literal["rir", "noise", None] = None):
         if which_augmentation is None:
-            which_augmentation = "rir" if np.random.rand() < 1.0 else "noise"
+            which_augmentation = "rir" if np.random.rand() < 0.5 else "noise"
         random_df = self.df_rir if which_augmentation == "rir" else self.df_noise
         path = os.path.join(self.rir_root, random_df.sample(1).iloc[0])
         try:
@@ -45,7 +45,7 @@ class RIRDataset:
             raise e
         if rir.size(0) > 1:
             rir = rir.mean(0)
-        return rir, which_augmentation, path
+        return rir, which_augmentation, sr
 
 
 class RIRAugmentations:
@@ -77,18 +77,15 @@ class RIRAugmentations:
 
         NOTE: RIR is moved to the device after it is shortened to avoid memory issues.
         """
-        waveform = waveform
-        rir, which_augmentation, rir_path = self.rir_dataset.get_random_rir(which_augmentation)
-        with torch.no_grad():
+        rir, which_augmentation, sr = self.rir_dataset.get_random_rir(which_augmentation)
+        with torch.no_grad(): # there are no parameters here, but I will perform seppuku if I have to debug this code one more time
             if which_augmentation == "rir":
                 if len(rir) > len(waveform):
                     rir = rir[:len(waveform)]
                 rir = rir.to(self.device)
                 rir = rir / torch.linalg.vector_norm(rir, ord=2)
                 rir = rir.squeeze()
-                T = waveform.shape[-1]
-                waveform = torchaudio.functional.fftconvolve(waveform, rir)
-                waveform = waveform[..., :T]
+                waveform = torchaudio.functional.fftconvolve(waveform, rir, mode="same") # TODO: find a way to scale the RIR to the waveform
             elif which_augmentation == "noise":
                 rir = rir.squeeze()
                 if len(rir) < len(waveform):
@@ -102,8 +99,6 @@ class RIRAugmentations:
                 waveform = waveform.unsqueeze(0)
                 scale_factor_tensor = torch.tensor([scale_factor * torch.rand((1,)).item()], device=self.device)
                 waveform = torchaudio.functional.add_noise(waveform, rir, scale_factor_tensor)
-                del scale_factor_tensor, padding  # Clean up intermediate tensors
-            del rir  # Clean up RIR tensor
         waveform = waveform.squeeze()
         return waveform
     
