@@ -16,8 +16,8 @@ class Augmentor:
     Class to define the waveform augmentation pipeline.
     """
 
-    def __init__(self, rir_root):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    def __init__(self, rir_root, device="cpu"):
+        self.device = device
 
         self.Codec = CodecAugmentations(device=self.device)
         self.General = GeneralAugmentations(device=self.device)
@@ -33,7 +33,7 @@ class Augmentor:
             # Using augmentations according to this paper: https://www.isca-archive.org/asvspoof_2024/xu24_asvspoof.pdf
             trim_starting_silence: bool = random.random() < 0.5  # 50% chance of removing the starting silence
             apply_timemask: bool = random.random() < 0.3  # 30% chance of applying time-mask
-            apply_rir: bool = random.random() < 1.0  # 30% chance of applying RIR augmentations
+            apply_rir: bool = random.random() < 0.3  # 30% chance of applying RIR augmentations
             apply_mu_law: bool = random.random() < 0.3  # 30% chance of applying mu-law enc-dec augmentation
             apply_LnL_ISD: bool = random.random() < 0.3  # 30% chance of applying RawBoost augmentations
             apply_noise_filter: bool = random.random() < 0.3  # 30% chance of applying noise augmentations
@@ -42,8 +42,7 @@ class Augmentor:
             waveform = waveform.to(self.device)
 
             if trim_starting_silence:  # 50% chance of removing the starting silence
-                with record_function("trim_starting_silence"):
-                    trimmed_waveform = self.General.trim_starting_silence(waveform)
+                trimmed_waveform = self.General.trim_starting_silence(waveform)
                 # print("Trimmed starting silence")
                 # Use the trimmed waveform only if it is not empty
                 if len(trimmed_waveform) != 0:
@@ -54,34 +53,29 @@ class Augmentor:
                 wf_len = len(waveform)
                 time_mask_duration = random.uniform(floor(wf_len * 0.2), floor(wf_len * 0.5))
                 time_mask_start = random.uniform(0, wf_len - time_mask_duration)
-                with record_function("mask_time"):
-                    waveform = self.General.mask_time(
+                waveform = self.General.mask_time(
                     waveform, mask_time=(time_mask_start, time_mask_start + time_mask_duration)
                 )
                 # print(f"Applied time mask {time_mask_start} to {time_mask_start + time_mask_duration}")
 
-            if apply_rir:
+            if apply_rir: # TODO: separate RIR and noise augmentations
                 rir_intesity = random.uniform(0.2, 0.8)
-                with record_function("apply_rir"):
-                    waveform = self.RIR.apply_rir(waveform, scale_factor=rir_intesity)
+                waveform = self.RIR.apply_rir(waveform, scale_factor=rir_intesity)
                 # print(f"Applied RIR with intensity {rir_intesity}")
 
             if apply_mu_law:
-                with record_function("mu_law"):
-                    waveform = self.Codec.mu_law(waveform)
+                waveform = self.Codec.mu_law(waveform)
                 # print("Applied mu-law enc-dec")
 
             if apply_LnL_ISD:
-                with record_function("Rawboost"):
-                    # Convert to CPU only when needed for RawBoost
-                    waveform_cpu = waveform.squeeze().cpu().numpy()
-                    waveform = process_Rawboost_feature(waveform_cpu, 16000, algo=5)
-                    del waveform_cpu  # Clean up CPU tensor
+                # Convert to CPU only when needed for RawBoost
+                waveform_cpu = waveform.squeeze().cpu().numpy()
+                waveform = process_Rawboost_feature(waveform_cpu, 16000, algo=5)
+                del waveform_cpu  # Clean up CPU tensor
                 # print("Applied RawBoost: LnL-ISD")
 
             if apply_noise_filter:
-                with record_function("noise_filter"):
-                    waveform = self.NoiseFilter.apply_noise_filter(waveform)
+                waveform = self.NoiseFilter.apply_noise_filter(waveform)
                 # print("Applied noise filter")
 
             waveform = waveform.unsqueeze(0).cpu().detach()
