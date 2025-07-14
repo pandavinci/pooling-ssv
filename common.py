@@ -1,6 +1,7 @@
 # region Imports
 from argparse import Namespace
 from typing import Dict, Tuple
+import os
 
 import numpy as np
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
@@ -256,8 +257,7 @@ def get_speaker_verification_dataloader(
         collate_fn=collate_func,
         sampler=weighted_sampler,
         drop_last=True,
-        num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
-        persistent_workers=False,
+        num_workers=int(os.environ.get("OMP_NUM_THREADS")),
     )
     if not eval_only:
         val_dataloader = DataLoader(
@@ -266,6 +266,7 @@ def get_speaker_verification_dataloader(
             collate_fn=collate_func_eval,
             shuffle=True,
             drop_last=True,
+            num_workers=int(os.environ.get("OMP_NUM_THREADS")),
         )
 
 
@@ -284,8 +285,7 @@ def get_speaker_verification_dataloader(
         batch_size=bs,
         collate_fn=collate_func_eval,
         shuffle=True,
-        num_workers=0,  # Disable multiprocessing to prevent memory leaks with GPU augmentations
-        persistent_workers=False,
+        num_workers=int(os.environ.get("OMP_NUM_THREADS")),
     )
 
     if eval_only:
