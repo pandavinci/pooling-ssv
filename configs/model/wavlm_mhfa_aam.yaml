@@ -5,3 +5,4 @@ defaults:
 extractor: WavLM_large
 processor: MHFA
 classifier: EmbeddingFF
+trainer: EmbeddingFFTrainer

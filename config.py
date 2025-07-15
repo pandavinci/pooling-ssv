@@ -8,6 +8,7 @@ from omegaconf import MISSING
 @dataclass
 class LossConfig:
     name: str = MISSING
+    type: str = MISSING
 
 @dataclass
 class AAMConfig(LossConfig):
@@ -21,6 +22,7 @@ class ModelConfig:
     processor: str = MISSING
     classifier: str = MISSING
     loss: LossConfig = MISSING
+    trainer: str = MISSING
 
 @dataclass
 class EnvironmentConfig:

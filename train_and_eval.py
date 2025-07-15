@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from common import build_model, get_dataloaders
 import config # args restriction check and type check
-from parse_arguments import parse_args
 
 # trainers
 from trainers.BaseFFTrainer import BaseFFTrainer

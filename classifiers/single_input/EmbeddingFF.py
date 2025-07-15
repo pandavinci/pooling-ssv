@@ -10,7 +10,7 @@ class EmbeddingFF(FFBase):
     embeddings from the feature processor rather than the final classifier output.
     """
 
-    def __init__(self, extractor, feature_processor, loss_fn, in_dim=1024, num_classes=2):
+    def __init__(self, extractor, feature_processor, loss_fn, in_dim=1024, num_classes=2, **kwargs):
         """
         Initialize the model.
 

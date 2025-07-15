@@ -18,7 +18,7 @@ class AdditiveAngularMarginLoss(BaseLoss):
         - our code was generated using AI, but I include the original code here for reference
     """
     
-    def __init__(self, in_features, out_features, margin=0.2, s=32.0, easy_margin=False):
+    def __init__(self, in_features, out_features, margin=0.2, s=32.0, easy_margin=False, **kwargs):
         """
         Initialize AAM Loss.
         
