@@ -1,194 +1,70 @@
-local_config = {
-    "argv": ["--local"],
-    "data_dir": "../datasets/",
-    "rir_root": "../datasets/rirs_noises",
-    "asvspoof2019la": {
-        "train_subdir": "LA",
-        "dev_subdir": "LA",
-        "eval_subdir": "LA",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "ASVspoof2019.LA.cm.eval.trl.txt",
-    },
-    "asvspoof2021la": {
-        # need to take train and dev from 2019 and eval from 2021
-        "train_subdir": "LA",
-        "dev_subdir": "LA",
-        "eval_subdir": "asvspoof2021/LA",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "asvspoof2021df": {
-        "train_subdir": "LA",
-        "dev_subdir": "asvspoof2021/DF",
-        "eval_subdir": "asvspoof2021/DF",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "trial_metadata.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "inthewild": {
-        "train_subdir": "LA",
-        "dev_subdir": "LA",
-        "eval_subdir": "InTheWild",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "meta.csv",
-    },
-    "morphing": {
-        "train_subdir": "LA",
-        "dev_subdir": "LA",
-        "eval_subdir": "Morphing",
-        "train_protocol": "train_protocol.txt",
-        "dev_protocol": "dev_protocol.txt",
-        "eval_protocol": "protocol.txt",
-    },
-    "asvspoof5": {
-        "train_subdir": "ASVspoof5",
-        "dev_subdir": "ASVspoof5",
-        "eval_subdir": "ASVspoof5",
-        "train_protocol": "ASVspoof5.train.tsv",
-        "dev_protocol": "ASVspoof5.dev.track_1.tsv",
-        "eval_protocol": "ASVspoof5.eval.track_1.tsv",
-    },
-    "sltsstc": {
-        "train_subdir": "slt-sstc",
-        "dev_subdir": "slt-sstc",
-        "eval_subdir": "slt-sstc",
-        "train_protocol": "dev_list.csv",
-        "dev_protocol": "dev_trials_50k.csv",
-        "eval_protocol": "dev_trials_50k.csv",
-    },
-    "batch_size": 2,
-    "lstm_batch_size": 2,
-}
+from dataclasses import dataclass, field
+from typing import Any, List
 
-metacentrum_config = {
-    "argv": ["--metacentrum"],
-    "data_dir": "../datasets/",
-    "rir_root": "../datasets/rirs_noises",
-    "asvspoof2019la": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "LA19",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trn.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "ASVspoof2019.LA.cm.eval.trl.txt",
-    },
-    "asvspoof2021la": {
-        # need to take train and dev from 2019 and eval from 2021
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "LA21",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trn.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "asvspoof2021df": {
-        "train_subdir": "LA19",
-        "dev_subdir": "DF21",
-        "eval_subdir": "DF21",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trn.txt",
-        "dev_protocol": "trial_metadata.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "inthewild": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "InTheWild",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trn.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "meta.csv",
-    },
-    "morphing": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "Morphing",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trn.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "protocol.txt",
-    },
-    "asvspoof5": {
-        "train_subdir": "",
-        "dev_subdir": "",
-        "eval_subdir": "",
-        "train_protocol": "ASVspoof5.train.metadata.txt",
-        "dev_protocol": "ASVspoof5.dev.metadata.txt",
-        "eval_protocol": "ASVspoof5.track_1.progress.trial.txt",
-    },
-    "sltsstc": {
-        "train_subdir": "slt-sstc",
-        "dev_subdir": "slt-sstc",
-        "eval_subdir": "slt-sstc",
-        "train_protocol": "train_list.csv",
-        "dev_protocol": "dev_trials_50k.csv",
-        "eval_protocol": "test_trials.csv",
-    },
-    "batch_size": 32,
-    "lstm_batch_size": 16,
-}
+import hydra
+from hydra.core.config_store import ConfigStore
+from omegaconf import MISSING
 
-sge_config = {
-    "argv": ["--sge"],
-    "data_dir": "/mnt/strade/ilicka/datasets/",
-    "rir_root": "/mnt/strade/ilicka/datasets/rirs_noises",
-    "asvspoof2019la": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "LA19",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "ASVspoof2019.LA.cm.eval.trl.txt",
-    },
-    "asvspoof2021la": {
-        # need to take train and dev from 2019 and eval from 2021
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "LA21",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "asvspoof2021df": {
-        "train_subdir": "LA19",
-        "dev_subdir": "DF21",
-        "eval_subdir": "DF21",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "trial_metadata.txt",
-        "eval_protocol": "trial_metadata.txt",
-    },
-    "inthewild": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "InTheWild",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "meta.csv",
-    },
-    "morphing": {
-        "train_subdir": "LA19",
-        "dev_subdir": "LA19",
-        "eval_subdir": "Morphing",
-        "train_protocol": "ASVspoof2019.LA.cm.train.trl.txt",
-        "dev_protocol": "ASVspoof2019.LA.cm.dev.trl.txt",
-        "eval_protocol": "protocol.txt",
-    },
-    "asvspoof5": {
-        "train_subdir": "ASVspoof5",
-        "dev_subdir": "ASVspoof5",
-        "eval_subdir": "ASVspoof5",
-        "train_protocol": "ASVspoof5.train.tsv",
-        "dev_protocol": "ASVspoof5.dev.track_1.tsv",
-        "eval_protocol": "ASVspoof5.eval.track_1.tsv",
-    },
-    "sltsstc": {
-        "train_subdir": "slt-sstc",
-        "dev_subdir": "slt-sstc",
-        "eval_subdir": "slt-sstc",
-        "train_protocol": "train_list.csv",
-        "dev_protocol": "dev_trials.csv",
-        "eval_protocol": "test_trials.csv",
-    },
-    "batch_size": 16,
-    "lstm_batch_size": 4,
-}
+@dataclass
+class LossConfig:
+    name: str = MISSING
+
+@dataclass
+class AAMConfig(LossConfig):
+    margin: float = MISSING
+    s: float = MISSING
+    easy_margin: bool = False
+
+@dataclass
+class ModelConfig:
+    extractor: str = MISSING
+    processor: str = MISSING
+    classifier: str = MISSING
+    loss: LossConfig = MISSING
+
+@dataclass
+class EnvironmentConfig:
+    local: bool = False
+    metacentrum: bool = False
+    sge: bool = False
+
+    batch_size: int = MISSING
+    lstm_batch_size: int = MISSING
+
+    rir_root: str = MISSING
+    musan_root: str = MISSING
+    data_dir: str = MISSING
+    sltsstc: dict = MISSING
+
+@dataclass
+class TrainingConfig:
+    dataset: str = MISSING
+    checkpoint: str | None = None
+    start_epoch: int = MISSING
+    num_epochs: int = MISSING
+    save_embeddings: bool = False
+    augment: bool = False
+
+defaults = [
+    "_self_",
+    "model/wavlm_mhfa_aam",
+    "environment/local",
+    "training/wavlm_mhfa_aam_augment",
+]
+
+@dataclass
+class Config:
+    # this is unfortunately verbose due to @dataclass limitations
+    defaults: List[Any] = field(default_factory=lambda: defaults)
+
+    model: ModelConfig = MISSING
+    environment: EnvironmentConfig = MISSING
+    training: TrainingConfig = MISSING
+
+cs = ConfigStore.instance()
+cs.store(name="base_config", node=Config)
+cs.store(group="training", name="base_training", node=TrainingConfig)
+cs.store(group="environment", name="base_environment", node=EnvironmentConfig)
+cs.store(group="model", name="base_model", node=ModelConfig)
+cs.store(group="model/loss", name="base_loss", node=LossConfig) # general
+cs.store(group="model/loss", name="aam_loss", node=AAMConfig)   # specialized

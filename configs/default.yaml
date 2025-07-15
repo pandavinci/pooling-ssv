@@ -1,0 +1,5 @@
+defaults:
+  - base_config
+  - environment: local
+  - model: wavlm_mhfa_aam
+  - training: wavlm_mhfa_aam_augment

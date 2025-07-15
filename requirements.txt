@@ -6,5 +6,6 @@ tqdm
 audiomentations
 safe-gpu
 pydub
-git+https://github.com/wenet-e2e/wespeaker.git
+# git+https://github.com/wenet-e2e/wespeaker.git
 pyyaml
+hydra-core

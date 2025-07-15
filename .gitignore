@@ -12,3 +12,4 @@ scores
 .docker*
 *.tar.gz
 embeddings/*
+outputs/*

@@ -1,0 +1,17 @@
+defaults:
+  - base_environment
+
+metacentrum: true
+batch_size: 32
+lstm_batch_size: 16
+
+rir_path: "../datasets/RIR/"
+musan_path: "../datasets/musan/"
+data_dir: "../datasets/"
+sltsstc:
+    train_subdir: "slt-sstc"
+    dev_subdir: "slt-sstc"
+    eval_subdir: "slt-sstc"
+    train_protocol: "dev_list.csv"
+    dev_protocol: "dev_trials_50k.csv"
+    eval_protocol: "dev_trials_50k.csv"

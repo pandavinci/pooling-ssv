@@ -1,0 +1,15 @@
+defaults:
+  - base_environment
+
+sge: true
+batch_size: 16
+lstm_batch_size: 4
+
+rir_path: "../datasets/RIR/"
+musan_path: "../datasets/musan/"
+data_dir: "../datasets/"
+sltsstc:
+    train_subdir: "slt-sstc"
+    dev_subdir: "slt-sstc"
+    eval_subdir: "slt-sstc"
+    train_protocol: "dev_list.csv"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from common import build_model, get_dataloaders
-from config import local_config, metacentrum_config, sge_config
+import config # args restriction check and type check
 from parse_arguments import parse_args
 
 # trainers
@@ -8,23 +8,23 @@ from trainers.BaseFFTrainer import BaseFFTrainer
 from trainers.BaseSklearnTrainer import BaseSklearnTrainer
 import numpy as np
 
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
-def main():
-    args = parse_args()
-
-    config = sge_config if args.sge else metacentrum_config if args.metacentrum else local_config
-
+@hydra.main(version_base=None,config_path="configs", config_name="default")
+def main(args: DictConfig):
+    print(OmegaConf.to_yaml(args))
     train_dataloader, val_dataloader, eval_dataloader = get_dataloaders(
-        dataset=args.dataset,
-        config=config,
-        lstm=True if "LSTM" in args.classifier else False,
-        augment=args.augment,
+        dataset=args.training.dataset,
+        config=args.environment,
+        lstm=True if "LSTM" in args.model.classifier else False,
+        augment=args.training.augment,
     )
 
     model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
 
-    if args.checkpoint:
-        trainer.load_model(args.checkpoint)
+    if args.training.checkpoint:
+        trainer.load_model(args.training.checkpoint)
 
     # TODO: Implement training of MHFA and AASIST with SkLearn models
 
@@ -37,8 +37,8 @@ def main():
     # Train the model
     if isinstance(trainer, BaseFFTrainer):
         # Default value of numepochs = 20
-        trainer.train(train_dataloader, val_dataloader, numepochs=args.num_epochs, start_epoch=args.start_epoch)
-        trainer.eval(eval_dataloader, subtitle=str(args.num_epochs))  # Eval after training
+        trainer.train(train_dataloader, val_dataloader, numepochs=args.training.num_epochs, start_epoch=args.training.start_epoch)
+        trainer.eval(eval_dataloader, subtitle=str(args.training.num_epochs))  # Eval after training
 
     elif isinstance(trainer, BaseSklearnTrainer):
         # Default value of variant = all

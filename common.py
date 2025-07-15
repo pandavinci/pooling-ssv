@@ -17,9 +17,6 @@ from classifiers.differential.SVMDiff import SVMDiff
 from classifiers.FFBase import FFBase
 from classifiers.single_input.EmbeddingFF import EmbeddingFF
 
-# Config
-from config import local_config, metacentrum_config, sge_config
-
 # Datasets
 from datasets.ASVspoof5 import ASVspoof5Dataset_pair, ASVspoof5Dataset_single
 from datasets.ASVspoof2019 import ASVspoof2019LADataset_pair, ASVspoof2019LADataset_single
@@ -194,7 +191,7 @@ def get_dataloaders(
     augment: bool = False,
     eval_only: bool = False,
     mode: str = "speaker_verification",
-) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader:
+) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader: # return training dataloader, validation dataloader, evaluation dataloader or just evaluation dataloader depending on the mode
     """Get dataloader"""
     return get_speaker_verification_dataloader(dataset, config, lstm, augment, eval_only)
 
@@ -213,7 +210,7 @@ def get_speaker_verification_dataloader(
         train_dataset_class = DATASETS[dataset]
         val_dataset_class = DATASETS["SLTSSTCDataset_eval"]
         eval_dataset_class = DATASETS["SLTSSTCDataset_eval"]
-        dataset_config = config["sltsstc"]
+        dataset_config = config.sltsstc
     else:
         raise ValueError("Invalid dataset name.")
     
@@ -296,15 +293,15 @@ def get_speaker_verification_dataloader(
 
 def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSklearnModel, BaseTrainer]:
     # Beware of MHFA or AASIST with SkLearn models, they are not implemented yet
-    if args.processor in ["MHFA", "AASIST", "SLS"] and args.classifier in ["GMMDiff", "SVMDiff", "LDAGaussianDiff"]:
+    if args.model.processor in ["MHFA", "AASIST", "SLS"] and args.model.classifier in ["GMMDiff", "SVMDiff", "LDAGaussianDiff"]:
         raise NotImplementedError("Training of SkLearn models with MHFA, AASIST or SLS is not yet implemented.")
     # region Extractor
-    extractor = EXTRACTORS[args.extractor]()  # map the argument to the class and instantiate it
+    extractor = EXTRACTORS[args.model.extractor]()  # map the argument to the class and instantiate it
     # endregion
 
     # region Processor (pooling)
     processor = None
-    if args.processor == "MHFA":
+    if args.model.processor == "MHFA":
         input_transformer_nb = extractor.transformer_layers
         input_dim = extractor.feature_size
 
@@ -323,20 +320,20 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
             compression_dim=compression_dim,
             outputs_dim=processor_output_dim,
         )
-    elif args.processor == "AASIST":
+    elif args.model.processor == "AASIST":
         processor = AASIST(
             inputs_dim=extractor.feature_size,
             # compression_dim=extractor.feature_size // 8,  # compression dim is hardcoded at the moment
             outputs_dim=extractor.feature_size,  # Output the same dimension as input, might want to play around with this
         )
-    elif args.processor == "SLS":
+    elif args.model.processor == "SLS":
         processor = SLS(
             inputs_dim=extractor.feature_size,
             outputs_dim=extractor.feature_size,  # Output the same dimension as input, might want to play around with this
         )
-    elif args.processor == "Mean":
+    elif args.model.processor == "Mean":
         processor = MeanProcessor()  # default avg pooling along the transformer layers and time frames
-    elif args.processor == "ResNet293":
+    elif args.model.processor == "ResNet293":
         processor = ResNet293(
             input_dim=extractor.feature_size,
             output_dim=extractor.feature_size,
@@ -347,12 +344,12 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
 
     # region Loss Function
     loss_fn = None
-    if not args.loss in LOSSES: # invalid loss function
+    if not args.model.loss.name in LOSSES: # invalid loss function
         raise ValueError(f"Invalid loss function, should be one of: {list(LOSSES.keys())}")
     else: # valid loss function
         # Get the loss class and metadata
-        loss_class = LOSSES[args.loss]
-        loss_metadata = LOSS_METADATA[args.loss]
+        loss_class = LOSSES[args.model.loss.name]
+        loss_metadata = LOSS_METADATA[args.model.loss.name]
         loss_params_dict = {}
         
         # Set parameters based on loss type
@@ -374,24 +371,24 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         loss_fn = loss_class(**loss_params_dict)
         
         # Warn if using an embedding-based loss with standard model
-        if loss_metadata["type"] == "embedding" and args.classifier not in EMBEDDING_COMPATIBLE_CLASSIFIERS:
-            print(f"WARNING: You are using an embedding-based loss ({args.loss}) with a non-embedding classifier ({args.classifier}).")
+        if loss_metadata["type"] == "embedding" and args.model.classifier not in EMBEDDING_COMPATIBLE_CLASSIFIERS:
+            print(f"WARNING: You are using an embedding-based loss ({args.model.loss}) with a non-embedding classifier ({args.model.classifier}).")
             print(f"For proper functionality, consider using one of the embedding-compatible classifiers: {EMBEDDING_COMPATIBLE_CLASSIFIERS}")
     # endregion
 
     # region Model and trainer
     model: FFBase | BaseSklearnModel
     trainer = None
-    match args.classifier:
+    match args.model.classifier:
         # region Special case Sklearn models
         case "GMMDiff":
             gmm_params = {  # Dict comprehension, get gmm parameters from args and remove None values
-                k: v for k, v in args.items() if (k in ["n_components", "covariance_type"] and k is not None)
+                k: v for k, v in args.model.items() if (k in ["n_components", "covariance_type"] and k is not None)
             }
             model = GMMDiff(extractor, processor, **gmm_params if gmm_params else {})  # pass as kwargs
             trainer = GMMDiffTrainer(model)
         case "SVMDiff":
-            model = SVMDiff(extractor, processor, kernel=args.kernel if args.kernel else "rbf")
+            model = SVMDiff(extractor, processor, kernel=args.model.kernel if args.model.kernel else "rbf")
             trainer = SVMDiffTrainer(model)
         case "LDAGaussianDiff":
             model = LDAGaussianDiff(extractor, processor)
@@ -400,11 +397,11 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         case _: # Everything else that doesn't require special handling
             try:
                 # Users must explicitly choose EmbeddingFF if they want to use embedding-based losses
-                model = CLASSIFIERS[str(args.classifier)][0](
+                model = CLASSIFIERS[str(args.model.classifier)][0](
                     extractor, processor, loss_fn=loss_fn, in_dim=extractor.feature_size, num_classes=num_classes
                 )
-                trainer_class = TRAINERS[str(args.classifier)]
-                trainer = trainer_class(model, save_embeddings=args.save_embeddings)
+                trainer_class = TRAINERS[str(args.model.classifier)]
+                trainer = trainer_class(model, save_embeddings=args.training.save_embeddings)
             except KeyError:
                 raise ValueError(f"Invalid classifier, should be one of: {list(CLASSIFIERS.keys())}")
     # endregion
