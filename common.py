@@ -189,21 +189,8 @@ def get_dataloaders(
     config: dict,
     lstm: bool = False,
     augment: bool = False,
-    eval_only: bool = False,
-    mode: str = "speaker_verification",
+    eval_only: bool = False
 ) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader: # return training dataloader, validation dataloader, evaluation dataloader or just evaluation dataloader depending on the mode
-    """Get dataloader"""
-    return get_speaker_verification_dataloader(dataset, config, lstm, augment, eval_only)
-
-def get_speaker_verification_dataloader(
-    dataset: str,
-    config: dict,
-    lstm: bool = False,
-    augment: bool = False,
-    eval_only: bool = False,
-) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader:
-    """Get dataloaders for speaker verification mode."""
-    # Get the dataset class and config
     dataset_config = {}
     t = "pair" if "pair" in dataset else "single"
     if "SLTSSTC" in dataset:
@@ -348,8 +335,8 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         raise ValueError(f"Invalid loss function, should be one of: {list(LOSSES.keys())}")
     else: # valid loss function
         # Get the loss class and metadata
-        loss_class = LOSSES[args.model.loss.name]
-        loss_metadata = LOSS_METADATA[args.model.loss.name]
+        loss_class = LOSSES[args.model.loss]
+        loss_metadata = LOSS_METADATA[args.model.loss]
         loss_params_dict = {}
         
         # Set parameters based on loss type
