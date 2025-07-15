@@ -335,8 +335,8 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase | BaseSkl
         raise ValueError(f"Invalid loss function, should be one of: {list(LOSSES.keys())}")
     else: # valid loss function
         # Get the loss class and metadata
-        loss_class = LOSSES[args.model.loss]
-        loss_metadata = LOSS_METADATA[args.model.loss]
+        loss_class = LOSSES[args.model.loss.name]
+        loss_metadata = LOSS_METADATA[args.model.loss.name]
         loss_params_dict = {}
         
         # Set parameters based on loss type
