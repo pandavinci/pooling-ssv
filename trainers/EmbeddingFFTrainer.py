@@ -112,8 +112,8 @@ class EmbeddingFFTrainer(BaseFFTrainer):
                 label = label.to(self.device)
 
                 # Get embeddings for both source and target
-                _, _, source_embeddings = self.model(source_wf)
-                _, _, target_embeddings = self.model(target_wf)
+                source_embeddings = self.model(source_wf)
+                target_embeddings = self.model(target_wf)
                 
                 # Compute cosine similarity
                 similarities = cosine_similarity(source_embeddings, target_embeddings)
