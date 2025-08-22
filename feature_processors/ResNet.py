@@ -1,4 +1,4 @@
-#from wespeaker.models.resnet import ResNet293 as build_ResNet293
+from wespeaker.models.resnet import ResNet293 as build_ResNet293
 from feature_processors.BaseProcessor import BaseProcessor
 import torch.nn as nn
 

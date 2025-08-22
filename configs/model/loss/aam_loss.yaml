@@ -1,8 +1,0 @@
-defaults:
-  - base_loss # specialized loads base and then is extended in config.py
-
-name: AdditiveAngularMarginLoss
-type: embedding
-margin: 0.5
-s: 30.0
-easy_margin: false

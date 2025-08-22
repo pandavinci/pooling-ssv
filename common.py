@@ -19,6 +19,7 @@ from extractors.Wav2Vec2 import Wav2Vec2_base, Wav2Vec2_large, Wav2Vec2_LV60k
 from extractors.WavLM import WavLM_base, WavLM_baseplus, WavLM_large
 from extractors.XLSR import XLSR_1B, XLSR_2B, XLSR_300M
 from extractors.MelSpectrogram import MelSpectrogram
+from extractors.FDLP import FDLP
 
 # Feature processors
 from feature_processors.AASIST import AASIST
@@ -26,6 +27,7 @@ from feature_processors.MeanProcessor import MeanProcessor
 from feature_processors.MHFA import MHFA
 from feature_processors.SLS import SLS
 from feature_processors.ResNet import ResNet293
+from feature_processors.ECAPA_TDNN import ECAPA_TDNN
 
 # Trainers
 from trainers.BaseTrainer import BaseTrainer
@@ -179,6 +181,11 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase, BaseTrai
         processor = MeanProcessor()  # default avg pooling along the transformer layers and time frames
     elif args.model.processor == "ResNet293":
         processor = ResNet293(
+            input_dim=extractor.feature_size,
+            output_dim=extractor.feature_size,
+        )
+    elif args.model.processor == "ECAPA_TDNN":
+        processor = ECAPA_TDNN(
             input_dim=extractor.feature_size,
             output_dim=extractor.feature_size,
         )
