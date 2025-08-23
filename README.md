@@ -114,6 +114,9 @@ DP
 └ train_and_eval.py     <- main script for training and evaluating models
 ```
 
+## Notes
+Weighted sampling is turned off right now as it isn't needed in any source speaker tracing datasets.
+
 ## Publications
 
 Here, the related publications will be listed.

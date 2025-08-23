@@ -19,6 +19,7 @@ class AAMConfig(LossConfig):
 @dataclass
 class ModelConfig:
     extractor: str = MISSING
+    feature_transform: str = MISSING
     processor: str = MISSING
     classifier: str = MISSING
     loss: LossConfig = MISSING
@@ -52,6 +53,7 @@ class Config:
     model: ModelConfig = MISSING
     environment: EnvironmentConfig = MISSING
     training: TrainingConfig = MISSING
+    save_path: str = MISSING
 
 cs = ConfigStore.instance()
 cs.store(name="base_config", node=Config)

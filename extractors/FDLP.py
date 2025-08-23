@@ -38,8 +38,11 @@ class FDLP:
                  clean_spectral_substraction_vector: np.array = None,
                  online_normalize: bool = False,
                  feature_batch: int = None,
-                 srate: int = 24000): #! changed from 16000 to 24000 for compatibility
+                 srate: int = 24000,
+                 device: str = "cpu"): #! changed from 16000 to 24000 for compatibility
         #! assert check_argument_types()
+        #! added device
+        self.device = device
         self.use_gl = use_gl
         self.fbank_config = [float(x) for x in fbank_config.split(',')]
         self.n_filters = n_filters
@@ -688,5 +691,5 @@ class FDLP:
             output = output.reshape((bs, -1, output.shape[1], output.shape[2])).transpose(0, 2, 1, 3)
 
         #! output tensors
-        output = torch.from_numpy(output)
+        output = torch.from_numpy(output).to(self.device)
         return output

@@ -15,12 +15,15 @@ def main(args: DictConfig):
     print(OmegaConf.to_yaml(args))
     train_dataloader, val_dataloader, eval_dataloader = get_dataloaders(
         dataset=args.training.dataset,
-        config=args.environment,
+        config=args,
         lstm=True if "LSTM" in args.model.classifier else False,
         augment=args.training.augment,
     )
 
-    model, trainer = build_model(args, num_classes=len(np.bincount(train_dataloader.dataset.get_labels())))
+    if args.model.feature_transform in ["FDLP", "MelSpectrogram"]:
+        model, trainer = build_model(args, num_classes=train_dataloader.dataset.num_speakers, feature_size=train_dataloader.dataset.feature_transform.feature_size)
+    else:
+        model, trainer = build_model(args, num_classes=train_dataloader.dataset.num_speakers)
 
     if args.training.checkpoint:
         trainer.load_model(args.training.checkpoint)

@@ -2,7 +2,7 @@
 from argparse import Namespace
 from typing import Dict, Tuple
 import os
-
+import torch
 import numpy as np
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
@@ -11,7 +11,7 @@ from classifiers.FFBase import FFBase
 from classifiers.single_input.EmbeddingFF import EmbeddingFF
 
 from datasets.SLTSSTC import SLTSSTCDataset_pair, SLTSSTCDataset_single, SLTSSTCDataset_eval
-from datasets.utils import custom_pair_batch_create, custom_single_batch_create, custom_eval_batch_create
+from datasets.utils import custom_pair_batch_create, custom_single_batch_create, custom_eval_batch_create, custom_feature_pair_batch_create, custom_feature_single_batch_create, custom_feature_eval_batch_create
 
 # Extractors
 from extractors.HuBERT import HuBERT_base, HuBERT_extralarge, HuBERT_large
@@ -51,18 +51,38 @@ def get_dataloaders(
     eval_only: bool = False
 ) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader: # return training dataloader, validation dataloader, evaluation dataloader or just evaluation dataloader depending on the mode
     dataset_config = {}
-    t = "pair" if "pair" in dataset else "single"
+    feature_transform = config.model.feature_transform
+    config = config.environment
     if "SLTSSTC" in dataset:
         train_dataset_class = str_to_class(dataset)
         val_dataset_class = str_to_class("SLTSSTCDataset_eval")
         eval_dataset_class = str_to_class("SLTSSTCDataset_eval")
         dataset_config = config.sltsstc
+        # if FDLP or MelSpectrogram, the extraction is done in dataloader
+        if feature_transform == "FDLP" or feature_transform == "MelSpectrogram":
+            feature_transform = str_to_class(feature_transform)()
+        else:
+            feature_transform = None
     else:
         raise ValueError("Invalid dataset name.")
     
-    # Common parameters
-    collate_func = custom_single_batch_create
-    collate_func_eval = custom_eval_batch_create
+    t = "pair" if "pair" in dataset else "single"
+    # Common parameters - select appropriate collate functions based on extractor type
+    if feature_transform is not None:
+        # Use feature-specific collate functions for extractors that output (B, T, F) tensors
+        if t == "pair":
+            collate_func = custom_feature_pair_batch_create
+        else:
+            collate_func = custom_feature_single_batch_create
+        collate_func_eval = custom_feature_eval_batch_create
+    else:
+        # Use standard collate functions for raw waveforms (B, T) tensors
+        if t == "pair":
+            collate_func = custom_pair_batch_create
+        else:
+            collate_func = custom_single_batch_create
+        collate_func_eval = custom_eval_batch_create
+    
     bs = config["batch_size"] if not lstm else config["lstm_batch_size"]  # Adjust batch size for LSTM models
 
     # Load the datasets
@@ -77,28 +97,30 @@ def get_dataloaders(
         variant="train",
         augment=augment,
         rir_root=config["rir_root"],
+        feature_transform=feature_transform,
     )
 
     dev_kwargs = {  # kwargs for the dataset class
         "root_dir": config["data_dir"] + dataset_config["dev_subdir"],
         "protocol_file_name": dataset_config["dev_protocol"],
         "variant": "dev",
+        "feature_transform": feature_transform,
     }
     val_dataset = val_dataset_class(**dev_kwargs)
 
     # there is about 90% of spoofed recordings in the dataset, balance with weighted random sampling
     # samples_weights = [train_dataset.get_class_weights()[i] for i in train_dataset.get_labels()]  # old and slow solution
-    samples_weights = np.vectorize(train_dataset.get_class_weights().__getitem__)(
-        train_dataset.get_labels()
-    )  # blazing fast solution
-    weighted_sampler = WeightedRandomSampler(samples_weights, len(train_dataset))
+    #samples_weights = np.vectorize(train_dataset.get_class_weights().__getitem__)(
+    #    train_dataset.get_labels()
+    #)  # blazing fast solution
+    #weighted_sampler = WeightedRandomSampler(samples_weights, len(train_dataset))
 
     # create dataloader, use custom collate_fn to pad the data to the longest recording in batch
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=bs,
         collate_fn=collate_func,
-        sampler=weighted_sampler,
+        #sampler=weighted_sampler,
         drop_last=True,
         num_workers=int(os.environ.get("OMP_NUM_THREADS")),
     )
@@ -118,7 +140,7 @@ def get_dataloaders(
         "root_dir": config["data_dir"] + dataset_config["eval_subdir"],
         "protocol_file_name": dataset_config["eval_protocol"],
         "variant": "eval",
-        "num_speakers": train_dataset.num_speakers,
+        "feature_transform": feature_transform,
     }
 
     # Create the dataset based on dynamically created eval_kwargs
@@ -137,19 +159,27 @@ def get_dataloaders(
         return train_dataloader, val_dataloader, eval_dataloader
     
 
-def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase, BaseTrainer]:
+def build_model(args: Namespace, num_classes: int = 2, feature_size: int = 80) -> Tuple[FFBase, BaseTrainer]:
     # Beware of MHFA or AASIST with SkLearn models, they are not implemented yet
     if args.model.processor in ["MHFA", "AASIST", "SLS"] and args.model.classifier in ["GMMDiff", "SVMDiff", "LDAGaussianDiff"]:
         raise NotImplementedError("Training of SkLearn models with MHFA, AASIST or SLS is not yet implemented.")
-    # region Extractor
-    extractor = str_to_class(args.model.extractor)()  # map the argument to the class and instantiate it
+    # region Extractor - if FDLP or MelSpectrogram, the extraction is done in dataloader
+    if args.model.feature_transform == "FDLP":
+        extractor = None
+        extractor_feature_size = feature_size
+    elif args.model.feature_transform == "MelSpectrogram":
+        extractor = None
+        extractor_feature_size = feature_size
+    else:
+        extractor = str_to_class(args.model.extractor)()  # map the argument to the class and instantiate it
+        extractor_feature_size = extractor.feature_size
     # endregion
 
     # region Processor (pooling)
     processor = None
     if args.model.processor == "MHFA":
         input_transformer_nb = extractor.transformer_layers
-        input_dim = extractor.feature_size
+        input_dim = extractor_feature_size
 
         processor_output_dim = (
             input_dim  # Output the same dimension as input - might want to play around with this
@@ -168,26 +198,26 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase, BaseTrai
         )
     elif args.model.processor == "AASIST":
         processor = AASIST(
-            inputs_dim=extractor.feature_size,
+            inputs_dim=extractor_feature_size,
             # compression_dim=extractor.feature_size // 8,  # compression dim is hardcoded at the moment
-            outputs_dim=extractor.feature_size,  # Output the same dimension as input, might want to play around with this
+            outputs_dim=extractor_feature_size,  # Output the same dimension as input, might want to play around with this
         )
     elif args.model.processor == "SLS":
         processor = SLS(
-            inputs_dim=extractor.feature_size,
-            outputs_dim=extractor.feature_size,  # Output the same dimension as input, might want to play around with this
+            inputs_dim=extractor_feature_size,
+            outputs_dim=extractor_feature_size,  # Output the same dimension as input, might want to play around with this
         )
     elif args.model.processor == "Mean":
         processor = MeanProcessor()  # default avg pooling along the transformer layers and time frames
     elif args.model.processor == "ResNet293":
         processor = ResNet293(
-            input_dim=extractor.feature_size,
-            output_dim=extractor.feature_size,
+            input_dim=extractor_feature_size,
+            output_dim=extractor_feature_size,
         )
     elif args.model.processor == "ECAPA_TDNN":
         processor = ECAPA_TDNN(
-            input_dim=extractor.feature_size,
-            output_dim=extractor.feature_size,
+            input_dim=extractor_feature_size,
+            output_dim=extractor_feature_size,
         )
     else:
         raise ValueError("Only AASIST, MHFA, Mean and SLS processors are currently supported.")
@@ -197,7 +227,7 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase, BaseTrai
     loss_class = str_to_class(args.model.loss.name)
     loss_params_dict = {}
     if args.model.loss.type == "embedding":
-        loss_params_dict['in_features'] = extractor.feature_size
+        loss_params_dict['in_features'] = extractor_feature_size
         loss_params_dict['out_features'] = num_classes
     loss_params_dict.update(args.model.loss.items())
     # Create the loss function instance
@@ -209,7 +239,7 @@ def build_model(args: Namespace, num_classes: int = 2) -> Tuple[FFBase, BaseTrai
     trainer = None
     try:
         model = str_to_class(args.model.classifier)(
-            extractor, processor, loss_fn=loss_fn, in_dim=extractor.feature_size, num_classes=num_classes
+            extractor, processor, loss_fn=loss_fn, in_dim=extractor_feature_size, num_classes=num_classes
         )
         trainer_class = str_to_class(args.model.trainer)
         trainer = trainer_class(model, save_embeddings=args.training.save_embeddings)

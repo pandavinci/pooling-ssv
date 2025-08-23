@@ -42,7 +42,10 @@ class EmbeddingFF(FFBase):
         """
 
         # Get raw embeddings from extractor
-        raw_embs = self.extractor.extract_features(waveforms)
+        if self.extractor is not None:
+            raw_embs = self.extractor.extract_features(waveforms)
+        else:
+            raw_embs = waveforms # the model uses feature transformation (MelSpectrogram, etc.) 
         
         # Process through feature processor to get processed embeddings
         processed_embeddings = self.feature_processor(raw_embs)

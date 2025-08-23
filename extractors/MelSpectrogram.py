@@ -2,7 +2,7 @@ import torchaudio
 import torch
 
 class MelSpectrogram():
-    def __init__(self, n_fft=2048, hop_length=512, n_mels=128, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, n_fft=2048, hop_length=512, n_mels=128, device="cpu"):
         super(MelSpectrogram, self).__init__()
         self.n_fft = n_fft
         self.hop_length = hop_length
