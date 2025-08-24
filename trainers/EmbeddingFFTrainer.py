@@ -11,24 +11,26 @@ from torch.profiler import record_function
 
 class EmbeddingFFTrainer(BaseFFTrainer):
     """
-    Trainer for models that return processed embeddings from the feature processor and use 
-    embedding-based loss functions like AAM.
-    
+    Trainer for models that return processed embeddings from the feature processor and use
+    a loss function that operates on those embeddings rather than classifier outputs.
+
     This trainer expects the model's forward method to return (logits, probs, processed_embeddings),
     and applies the loss function to the processed embeddings from the feature processor.
     """
-    
+
     def __init__(
-        self, model: EmbeddingFF, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False
+        self, model: EmbeddingFF, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False, save_path=None
     ):
         """
-        Initialize the trainer for embedding-based models and losses.
-        
+        Initialize the EmbeddingFFTrainer.
+
         Args:
             model: The model to train (must be EmbeddingFF or similar that returns processed embeddings)
-            device: The device to use for training
+            device: Device to use for training
+            save_embeddings: Whether to save embeddings during validation
+            save_path: Path prefix for saving all training outputs
         """
-        super().__init__(model, device, save_embeddings)
+        super().__init__(model, device, save_embeddings, save_path)
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         """

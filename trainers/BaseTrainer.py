@@ -7,9 +7,10 @@ from wespeaker.models.speaker_model import get_speaker_model """
 from .utils import calculate_EER
 
 class BaseTrainer:
-    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu", save_path=None):
         self.model = model
         self.device = device
+        self.save_path = save_path
 
     def save_model(self, path: str):
         """
@@ -21,8 +22,10 @@ class BaseTrainer:
         param path: Path to save the model to
         """
         if isinstance(self.model, torch.nn.Module):
-            os.makedirs(os.path.dirname(os.path.join("checkpoints",path)), exist_ok=True)
-            torch.save(self.model.state_dict(), os.path.join("checkpoints",path))
+            # Use provided save_path or fall back to instance save_path
+            full_path = os.path.join("checkpoints", self.save_path, path) if self.save_path else os.path.join("checkpoints", path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            torch.save(self.model.state_dict(), full_path)
         else:
             raise NotImplementedError(
                 "Child classes for non-PyTorch models need to implement save_model method"

@@ -4,6 +4,7 @@ from tqdm import tqdm
 from classifiers.differential.FFConcat import FFConcatBase
 from classifiers.differential.FFDiff import FFDiffBase
 from trainers.BaseFFTrainer import BaseFFTrainer
+from torch.nn import CrossEntropyLoss
 
 
 class FFPairTrainer(BaseFFTrainer):
@@ -11,8 +12,10 @@ class FFPairTrainer(BaseFFTrainer):
         self,
         model: FFDiffBase | FFConcatBase,
         device="cuda" if torch.cuda.is_available() else "cpu",
+        save_path=None,
     ):
-        super().__init__(model, device)
+        super().__init__(model, device, save_path=save_path)
+        self.lossfn = CrossEntropyLoss()
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         """

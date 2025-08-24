@@ -8,12 +8,10 @@ from losses.CrossEntropyLoss import CrossEntropyLoss
 
 
 class FFDotTrainer(BaseFFTrainer):
-    def __init__(self, model: FFDot, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, model: FFDot, loss_fn=None, device="cuda" if torch.cuda.is_available() else "cpu", save_path=None):
         # If no loss function is provided, use BCELoss by default for FFDotTrainer
-        if loss_fn is None:
-            loss_fn = BCELoss()
-        
-        super().__init__(model, loss_fn, device)
+        super().__init__(model, device, save_path=save_path)
+        self.lossfn = loss_fn if loss_fn else torch.nn.BCELoss()
 
     def train_epoch(self, train_dataloader) -> tuple[list[float], list[float]]:
         losses = []

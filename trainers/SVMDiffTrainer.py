@@ -6,9 +6,9 @@ from trainers.BaseSklearnTrainer import BaseSklearnTrainer
 
 
 class SVMDiffTrainer(BaseSklearnTrainer):
-    def __init__(self, model: SVMDiff, device="cuda" if torch.cuda.is_available() else "cpu"):
-        super().__init__(model, device)
-        self.model: SVMDiff  # type hint for Pylance and Pyright
+    def __init__(self, model: SVMDiff, device="cuda" if torch.cuda.is_available() else "cpu", save_path=None):
+        super().__init__(model, device, save_path)
+        self.model: SVMDiff  # Type hinting so Pylance and Pyright don't complain
 
         # Move the extractor to the device, it's much faster on GPU
         self.model.extractor = self.model.extractor.to(device)

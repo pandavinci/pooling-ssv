@@ -6,8 +6,8 @@ from trainers.BaseSklearnTrainer import BaseSklearnTrainer
 
 
 class GMMDiffTrainer(BaseSklearnTrainer):
-    def __init__(self, model: GMMDiff, device="cuda" if torch.cuda.is_available() else "cpu"):
-        super().__init__(model, device)
+    def __init__(self, model: GMMDiff, device="cuda" if torch.cuda.is_available() else "cpu", save_path=None):
+        super().__init__(model, device, save_path)
         self.model: GMMDiff  # Type hinting so Pylance and Pyright don't complain
 
         # Move the extractor to the device, it's much faster on GPU

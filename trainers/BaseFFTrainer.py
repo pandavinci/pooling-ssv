@@ -10,8 +10,8 @@ from losses.CrossEntropyLoss import CrossEntropyLoss as CustomCrossEntropyLoss
 
 # This is the base class for all trainers - use this if you aren't experimenting with new approaches
 class BaseFFTrainer(BaseTrainer):
-    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False):
-        super().__init__(model, device)
+    def __init__(self, model, device="cuda" if torch.cuda.is_available() else "cpu", save_embeddings=False, save_path=None):
+        super().__init__(model, device, save_path)
 
         self.optimizer = torch.optim.Adam(
             model.parameters()
@@ -21,7 +21,8 @@ class BaseFFTrainer(BaseTrainer):
         self.model = model.to(device)
         self.save_embeddings = save_embeddings
         if save_embeddings:
-            os.makedirs("embeddings", exist_ok=True)
+            embeddings_dir = os.path.join(self.save_path, "embeddings") if self.save_path else "embeddings"
+            os.makedirs(embeddings_dir, exist_ok=True)
         
         # Move loss function to the correct device if it has parameters
         #if hasattr(self.model.loss_fn, 'to') and callable(getattr(self.model.loss_fn, 'to')):
@@ -105,14 +106,17 @@ class BaseFFTrainer(BaseTrainer):
             labels, scores, predictions, file_names = self.val_epoch(val_dataloader, save_scores)
 
             if save_scores:
-                os.makedirs("scores", exist_ok=True)
-                with open(f"scores/{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_scores.txt", "w") as f:
+                scores_dir = os.path.join(self.save_path, "scores") if self.save_path else "scores"
+                os.makedirs(scores_dir, exist_ok=True)
+                scores_file = os.path.join(scores_dir, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_scores.txt")
+                with open(scores_file, "w") as f:
                     for file_name, score, label in zip(file_names, scores, labels):
                         f.write(f"{file_name},{score},{'nan' if math.isnan(label) else int(label)}\n")
 
             if self.save_embeddings and predictions:
                 embeddings = np.array(predictions)
-                embeddings_file = f"embeddings/{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_embeddings.npz"
+                embeddings_dir = os.path.join(self.save_path, "embeddings") if self.save_path else "embeddings"
+                embeddings_file = os.path.join(embeddings_dir, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_{subtitle}_embeddings.npz")
                 np.savez_compressed(
                     embeddings_file,
                     embeddings=embeddings,
@@ -166,7 +170,8 @@ class BaseFFTrainer(BaseTrainer):
         plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} Loss" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
-        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png")
+        plot_path = os.path.join(self.save_path, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png") if self.save_path else f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png"
+        plt.savefig(plot_path)
 
     def _plot_eer(self, eers, subtitle: str = ""):
         """
@@ -178,7 +183,8 @@ class BaseFFTrainer(BaseTrainer):
         plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} EER" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("EER")
-        plt.savefig(f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png")
+        plot_path = os.path.join(self.save_path, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png") if self.save_path else f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png"
+        plt.savefig(plot_path)
 
     def finetune(self, train_dataloader, val_dataloader, numepochs=5, finetune_ssl=False, start_epoch=1):
         """

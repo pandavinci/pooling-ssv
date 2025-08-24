@@ -3,15 +3,15 @@ import joblib
 import numpy as np
 import torch
 from tqdm import tqdm
+import os
 
 from classifiers.BaseSklearnModel import BaseSklearnModel
 from trainers.BaseTrainer import BaseTrainer
 
 
 class BaseSklearnTrainer(BaseTrainer):
-    def __init__(self, model: BaseSklearnModel, device="cuda" if torch.cuda.is_available() else "cpu"):
-        self.model = model
-        self.device = device
+    def __init__(self, model: BaseSklearnModel, device="cuda" if torch.cuda.is_available() else "cpu", save_path=None):
+        super().__init__(model, device, save_path)
 
     def save_model(self, path: str):
         """
@@ -20,14 +20,22 @@ class BaseSklearnTrainer(BaseTrainer):
         the PyTorch components need to be extracted as state_dicts and saved separately.
 
         param path: Path to save the model to
+        param save_path: Optional save path prefix to prepend to the path
         """
+        # Use provided save_path or fall back to instance save_path
+        full_path = os.path.join(self.save_path, path) if self.save_path else path
+        
         if isinstance(self.model.extractor, torch.nn.Module) or isinstance(
             self.model.feature_processor, torch.nn.Module
         ):
             serialized_model = SklearnSaver(deepcopy(self.model))
-            torch.save(serialized_model, path)
+            if os.path.dirname(full_path):
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            torch.save(serialized_model, full_path)
         else:
-            joblib.dump(self.model, path)
+            if os.path.dirname(full_path):
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            joblib.dump(self.model, full_path)
 
     def load_model(self, path: str):
         """
