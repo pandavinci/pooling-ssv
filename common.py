@@ -26,7 +26,7 @@ from feature_processors.AASIST import AASIST
 from feature_processors.MeanProcessor import MeanProcessor
 from feature_processors.MHFA import MHFA
 from feature_processors.SLS import SLS
-from feature_processors.ResNet import ResNet293
+from feature_processors.ResNet import ResNet293, ResNet221, ResNet152, ResNet101, ResNet50, ResNet34, ResNet18
 from feature_processors.ECAPA_TDNN import ECAPA_TDNN
 
 # Trainers
@@ -209,8 +209,9 @@ def build_model(args: Namespace, num_classes: int = 2, feature_size: int = 80) -
         )
     elif args.model.processor == "Mean":
         processor = MeanProcessor()  # default avg pooling along the transformer layers and time frames
-    elif args.model.processor == "ResNet293":
-        processor = ResNet293(
+    elif args.model.processor in ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "ResNet221", "ResNet293"]:
+        processor_class = str_to_class(args.model.processor)
+        processor = processor_class(
             input_dim=extractor_feature_size,
             output_dim=extractor_feature_size,
         )
@@ -220,7 +221,7 @@ def build_model(args: Namespace, num_classes: int = 2, feature_size: int = 80) -
             output_dim=extractor_feature_size,
         )
     else:
-        raise ValueError("Only AASIST, MHFA, Mean and SLS processors are currently supported.")
+        raise ValueError("Only AASIST, MHFA, Mean, SLS, ResNet variants, and ECAPA_TDNN processors are currently supported.")
     # endregion
 
     # region Loss Function
@@ -242,7 +243,7 @@ def build_model(args: Namespace, num_classes: int = 2, feature_size: int = 80) -
             extractor, processor, loss_fn=loss_fn, in_dim=extractor_feature_size, num_classes=num_classes
         )
         trainer_class = str_to_class(args.model.trainer)
-        trainer = trainer_class(model, save_embeddings=args.training.save_embeddings)
+        trainer = trainer_class(model, save_embeddings=args.training.save_embeddings, save_path=args.save_path)
     except KeyError:
         raise ValueError(f"Invalid classifier, check the classifier/ folder for available classifiers.")
     # endregion
