@@ -1,0 +1,9 @@
+defaults:
+  - base_model
+  - loss: aam-loss
+
+feature_transform: None
+extractor: WavLM_large
+processor: MHFA
+classifier: EmbeddingFF
+trainer: EmbeddingFFTrainer

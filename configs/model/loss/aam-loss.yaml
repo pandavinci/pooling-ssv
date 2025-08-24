@@ -1,0 +1,5 @@
+name: AdditiveAngularMarginLoss
+type: embedding
+margin: 0.5
+s: 30.0
+easy_margin: false

@@ -1,0 +1,9 @@
+defaults:
+  - base_model
+  - loss: aam-loss
+
+feature_transform: MelSpectrogram
+extractor: None
+processor: ResNet18
+classifier: EmbeddingFF
+trainer: EmbeddingFFTrainer 

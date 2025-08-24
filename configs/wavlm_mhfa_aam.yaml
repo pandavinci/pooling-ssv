@@ -1,0 +1,10 @@
+dataset: SLTSSTCDataset_single
+extractor: WavLM_large
+model: MHFA
+classifier: EmbeddingFF
+loss: AdditiveAngularMargin
+checkpoint: checkpoints/WavLM_large_MHFA_10.pt
+start_epoch: 10
+num_epochs: 1
+augment: true
+metacentrum: true

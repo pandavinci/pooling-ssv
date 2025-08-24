@@ -1,0 +1,9 @@
+defaults:
+  - base_model
+  - loss: aam-loss
+
+feature_transform: MelSpectrogram
+extractor: None
+processor: ECAPA_TDNN
+classifier: EmbeddingFF
+trainer: EmbeddingFFTrainer

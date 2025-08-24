@@ -13,4 +13,3 @@ scores
 *.tar.gz
 embeddings/*
 outputs/*
-configs/*

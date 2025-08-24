@@ -2,3 +2,5 @@ defaults:
   - base_config
   - model: wavlm-mhfa-aam
   - training: slt-sstc-aug
+
+save_path: "asd/wavlm-mhfa-aam"

@@ -1,0 +1,5 @@
+# @package _global_
+defaults:
+  - override /model: ecapa-tdnn-fdlp-aam
+
+save_path: "asd/fdlp-ecapa-tdnn"

@@ -1,0 +1,5 @@
+# @package _global_
+defaults:
+  - override /model: resnet18-fdlp-aam
+
+save_path: "asd/resnet18-fdlp" 

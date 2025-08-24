@@ -1,0 +1,5 @@
+# @package _global_
+defaults:
+  - override /model: resnet34-mel-aam
+
+save_path: "asd/resnet34-mel" 

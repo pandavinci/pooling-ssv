@@ -1,0 +1,5 @@
+# @package _global_
+defaults:
+  - override /model: ecapa-tdnn-mel-aam
+
+save_path: "asd/mel-ecapa-tdnn"
