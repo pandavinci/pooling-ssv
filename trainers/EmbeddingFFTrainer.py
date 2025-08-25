@@ -6,9 +6,6 @@ from classifiers.single_input.EmbeddingFF import EmbeddingFF
 from trainers.BaseFFTrainer import BaseFFTrainer
 from torch.nn.functional import cosine_similarity
 
-from trainers.utils import trace_handler
-from torch.profiler import record_function
-
 class EmbeddingFFTrainer(BaseFFTrainer):
     """
     Trainer for models that return processed embeddings from the feature processor and use
@@ -44,41 +41,20 @@ class EmbeddingFFTrainer(BaseFFTrainer):
         losses = []
 
         # Training loop
-        """ iterations_total = 200
-        with torch.profiler.profile(
-            activities=[
-                torch.profiler.ProfilerActivity.CUDA,
-                torch.profiler.ProfilerActivity.CPU,
-            ],
-            schedule=torch.profiler.schedule(wait=0, warmup=0, active=iterations_total, repeat=0),
-            profile_memory=True,
-            with_stack=True,
-            record_shapes=True,
-            on_trace_ready=trace_handler,
-        ) as prof:
-            iterations = 0 """
         for _, wf, label in tqdm(train_dataloader):
-            """ iterations += 1
-            if iterations > iterations_total:
-                break """
             wf = wf.to(self.device)
             label = label.to(self.device)
 
             # Forward pass
             self.optimizer.zero_grad()
-            #with record_function("### forward ###"):
             processed_embeddings = self.model(wf)
 
             # Use processed embeddings with the loss function
-            #with record_function("### loss ###"):
             loss = self.model.loss_fn(processed_embeddings, label.long())
-            #with record_function("### backward ###"):
             loss.backward()
-            #with record_function("### optimizer ###"):
             self.optimizer.step()
 
             losses.append(loss.item())
-            # prof.step()
 
         return losses
 
