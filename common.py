@@ -11,6 +11,7 @@ from classifiers.FFBase import FFBase
 from classifiers.single_input.EmbeddingFF import EmbeddingFF
 
 from datasets.SLTSSTC import SLTSSTCDataset_pair, SLTSSTCDataset_single, SLTSSTCDataset_eval
+from datasets.SLTSSTC_Preextracted import SLTSSTCDataset_preextracted_pair, SLTSSTCDataset_preextracted_single, SLTSSTCDataset_preextracted_eval
 from datasets.utils import custom_pair_batch_create, custom_single_batch_create, custom_eval_batch_create, custom_feature_pair_batch_create, custom_feature_single_batch_create, custom_feature_eval_batch_create
 
 # Extractors
@@ -52,14 +53,26 @@ def get_dataloaders(
 ) -> Tuple[DataLoader, DataLoader, DataLoader] | DataLoader: # return training dataloader, validation dataloader, evaluation dataloader or just evaluation dataloader depending on the mode
     dataset_config = {}
     feature_transform = config.model.feature_transform
-    config = config.environment
+    is_preextracted = hasattr(config.training, 'preextracted') and config.training.preextracted
+    
+    config_env = config.environment
     if "SLTSSTC" in dataset:
         train_dataset_class = str_to_class(dataset)
-        val_dataset_class = str_to_class("SLTSSTCDataset_eval")
-        eval_dataset_class = str_to_class("SLTSSTCDataset_eval")
-        dataset_config = config.sltsstc
-        # if FDLP or MelSpectrogram, the extraction is done in dataloader
-        if feature_transform == "FDLP" or feature_transform == "MelSpectrogram":
+        
+        # Handle preextracted datasets differently
+        if is_preextracted:
+            val_dataset_class = str_to_class("SLTSSTCDataset_preextracted_eval")
+            eval_dataset_class = str_to_class("SLTSSTCDataset_preextracted_eval")
+        else:
+            val_dataset_class = str_to_class("SLTSSTCDataset_eval")
+            eval_dataset_class = str_to_class("SLTSSTCDataset_eval")
+            
+        dataset_config = config_env.sltsstc
+        
+        # Handle feature transforms
+        if is_preextracted:
+            feature_transform = None  # Features are already extracted
+        elif feature_transform == "FDLP" or feature_transform == "MelSpectrogram":
             feature_transform = str_to_class(feature_transform)()
         else:
             feature_transform = None
@@ -67,9 +80,9 @@ def get_dataloaders(
         raise ValueError("Invalid dataset name.")
     
     t = "pair" if "pair" in dataset else "single"
-    # Common parameters - select appropriate collate functions based on extractor type
-    if feature_transform is not None:
-        # Use feature-specific collate functions for extractors that output (B, T, F) tensors
+    # Common parameters - select appropriate collate functions based on dataset type
+    if is_preextracted or feature_transform is not None:
+        # Use feature-specific collate functions for preextracted features or extractors that output (B, T, F) tensors
         if t == "pair":
             collate_func = custom_feature_pair_batch_create
         else:
@@ -83,7 +96,7 @@ def get_dataloaders(
             collate_func = custom_single_batch_create
         collate_func_eval = custom_eval_batch_create
     
-    bs = config["batch_size"] if not lstm else config["lstm_batch_size"]  # Adjust batch size for LSTM models
+    bs = config_env["batch_size"] if not lstm else config_env["lstm_batch_size"]  # Adjust batch size for LSTM models
 
     # Load the datasets
     train_dataloader = DataLoader(Dataset())  # dummy dataloader for type hinting compliance
@@ -91,18 +104,28 @@ def get_dataloaders(
 
     # always load training dataset to get the number of unique speakers
     print("Loading training datasets...")
+    
+    # Get appropriate protocol file names based on dataset type
+    if is_preextracted:
+        feature_type = config.model.feature_transform.lower()
+        train_protocol = dataset_config["preextracted_protocols"][f"train_{feature_type}"]
+        dev_protocol = dataset_config["preextracted_protocols"][f"dev_{feature_type}"]
+    else:
+        train_protocol = dataset_config["train_protocol"]
+        dev_protocol = dataset_config["dev_protocol"]
+    
     train_dataset = train_dataset_class(
-        root_dir=config["data_dir"] + dataset_config["train_subdir"],
-        protocol_file_name=dataset_config["train_protocol"],
+        root_dir=config_env["data_dir"] + dataset_config["train_subdir"],
+        protocol_file_name=train_protocol,
         variant="train",
         augment=augment,
-        rir_root=config["rir_root"],
+        rir_root=config_env["rir_root"],
         feature_transform=feature_transform,
     )
 
     dev_kwargs = {  # kwargs for the dataset class
-        "root_dir": config["data_dir"] + dataset_config["dev_subdir"],
-        "protocol_file_name": dataset_config["dev_protocol"],
+        "root_dir": config_env["data_dir"] + dataset_config["dev_subdir"],
+        "protocol_file_name": dev_protocol,
         "variant": "dev",
         "feature_transform": feature_transform,
     }
@@ -136,13 +159,19 @@ def get_dataloaders(
 
 
     print("Loading eval dataset...")
+    
+    # Get appropriate eval protocol file name
+    if is_preextracted:
+        eval_protocol = dataset_config["preextracted_protocols"][f"test_{feature_type}"]
+    else:
+        eval_protocol = dataset_config["eval_protocol"]
+    
     eval_kwargs = {  # kwargs for the dataset class
-        "root_dir": config["data_dir"] + dataset_config["eval_subdir"],
-        "protocol_file_name": dataset_config["eval_protocol"],
+        "root_dir": config_env["data_dir"] + dataset_config["eval_subdir"],
+        "protocol_file_name": eval_protocol,
         "variant": "eval",
         "feature_transform": feature_transform,
     }
-
     # Create the dataset based on dynamically created eval_kwargs
     eval_dataset = eval_dataset_class(**eval_kwargs)
     eval_dataloader = DataLoader(

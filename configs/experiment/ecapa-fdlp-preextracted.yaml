@@ -1,0 +1,6 @@
+# @package _global_
+defaults:
+  - override /model: ecapa-tdnn-fdlp-aam
+  - override /training: slt-sstc-preextracted
+
+save_path: "results/asd/ecapa-fdlp-preextracted" 

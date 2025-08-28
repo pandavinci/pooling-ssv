@@ -20,8 +20,27 @@ def main(args: DictConfig):
         augment=args.training.augment,
     )
 
+    # Determine feature_size based on whether features are preextracted or not
+    is_preextracted = hasattr(args.training, 'preextracted') and args.training.preextracted
+    
     if args.model.feature_transform in ["FDLP", "MelSpectrogram"]:
-        model, trainer = build_model(args, num_classes=train_dataloader.dataset.num_speakers, feature_size=train_dataloader.dataset.feature_transform.feature_size)
+        if is_preextracted:
+            # For preextracted features, get feature size from the actual data
+            sample_data = train_dataloader.dataset[0]
+            if len(sample_data) >= 2:  # Check if we have at least 2 elements (filename, features, ...)
+                sample_features = sample_data[1]  # Get the features tensor
+                if hasattr(sample_features, 'shape') and len(sample_features.shape) >= 2:
+                    feature_size = sample_features.shape[-1]  # Last dimension is feature dimension
+                else:
+                    # Fallback to default FDLP feature size
+                    feature_size = 80
+            else:
+                feature_size = 80
+        else:
+            # For non-preextracted features, use the feature_transform object
+            feature_size = train_dataloader.dataset.feature_transform.feature_size
+        
+        model, trainer = build_model(args, num_classes=train_dataloader.dataset.num_speakers, feature_size=feature_size)
     else:
         model, trainer = build_model(args, num_classes=train_dataloader.dataset.num_speakers)
 

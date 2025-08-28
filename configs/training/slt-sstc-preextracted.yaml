@@ -1,10 +1,10 @@
 defaults:
   - base_training
 
-dataset: SLTSSTCDataset_single
+dataset: SLTSSTCDataset_preextracted_single
 start_epoch: 0
 num_epochs: 10
-augment: true
+augment: false
 save_embeddings: false
-preextracted: false
+preextracted: true
 #checkpoint: checkpoints/WavLM_large_MHFA_1.pt # optional, will be None if not provided

@@ -47,6 +47,7 @@ class TrainingConfig:
     num_epochs: int = MISSING
     save_embeddings: bool = False
     augment: bool = False
+    preextracted: bool = False
 
 @dataclass
 class Config:

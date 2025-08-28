@@ -15,3 +15,11 @@ sltsstc:
     train_protocol: "train_list.csv"
     dev_protocol: "dev_trials_50k.csv"
     eval_protocol: "test_trials.csv"
+    # Preextracted features protocol files
+    preextracted_protocols:
+        train_fdlp: "train_list_fdlp.npz"
+        dev_fdlp: "dev_list_fdlp.npz"
+        test_fdlp: "test_list_fdlp.npz"
+        train_mel: "train_list_mel.npz"
+        dev_mel: "dev_list_mel.npz"
+        test_mel: "test_list_mel.npz"
