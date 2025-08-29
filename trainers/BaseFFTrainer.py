@@ -170,8 +170,20 @@ class BaseFFTrainer(BaseTrainer):
         plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} Loss" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
-        plot_path = os.path.join(self.save_path, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png") if self.save_path else f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_loss_{subtitle}.png"
+        
+        # Create safe filename components
+        extractor_name = getattr(type(self.model.extractor), '__name__', 'Unknown') if self.model.extractor is not None else 'NoExtractor'
+        processor_name = getattr(type(self.model.feature_processor), '__name__', 'Unknown') if self.model.feature_processor is not None else 'NoProcessor'
+        
+        if self.save_path:
+            # Ensure the save directory exists
+            os.makedirs(self.save_path, exist_ok=True)
+            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_loss_{subtitle}.png")
+        else:
+            plot_path = f"./{extractor_name}_{processor_name}_loss_{subtitle}.png"
+        
         plt.savefig(plot_path)
+        plt.close()  # Close the figure to free memory
 
     def _plot_eer(self, eers, subtitle: str = ""):
         """
@@ -183,8 +195,20 @@ class BaseFFTrainer(BaseTrainer):
         plt.title(f"{type(self.model.extractor).__name__} {type(self.model.feature_processor).__name__} EER" + f" - {subtitle}" if subtitle else "")
         plt.xlabel("Epoch")
         plt.ylabel("EER")
-        plot_path = os.path.join(self.save_path, f"{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png") if self.save_path else f"./{type(self.model.extractor).__name__}_{type(self.model.feature_processor).__name__}_EER_{subtitle}.png"
+        
+        # Create safe filename components
+        extractor_name = getattr(type(self.model.extractor), '__name__', 'Unknown') if self.model.extractor is not None else 'NoExtractor'
+        processor_name = getattr(type(self.model.feature_processor), '__name__', 'Unknown') if self.model.feature_processor is not None else 'NoProcessor'
+        
+        if self.save_path:
+            # Ensure the save directory exists
+            os.makedirs(self.save_path, exist_ok=True)
+            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_EER_{subtitle}.png")
+        else:
+            plot_path = f"./{extractor_name}_{processor_name}_EER_{subtitle}.png"
+        
         plt.savefig(plot_path)
+        plt.close()  # Close the figure to free memory
 
     def finetune(self, train_dataloader, val_dataloader, numepochs=5, finetune_ssl=False, start_epoch=1):
         """

@@ -2,4 +2,4 @@
 defaults:
   - override /model: resnet50-mel-aam
 
-save_path: "asd/resnet50-mel" 
+save_path: "results/asd/resnet50-mel"   

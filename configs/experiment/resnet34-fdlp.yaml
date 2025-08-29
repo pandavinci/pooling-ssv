@@ -2,4 +2,4 @@
 defaults:
   - override /model: resnet34-fdlp-aam
 
-save_path: "asd/resnet34-fdlp" 
+save_path: "results/asd/resnet34-fdlp" 

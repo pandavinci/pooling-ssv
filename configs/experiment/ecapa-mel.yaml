@@ -2,4 +2,4 @@
 defaults:
   - override /model: ecapa-tdnn-mel-aam
 
-save_path: "asd/mel-ecapa-tdnn"
+save_path: "results/asd/ecapa-mel"

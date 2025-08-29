@@ -23,7 +23,7 @@ class BaseTrainer:
         """
         if isinstance(self.model, torch.nn.Module):
             # Use provided save_path or fall back to instance save_path
-            full_path = os.path.join("checkpoints", self.save_path, path) if self.save_path else os.path.join("checkpoints", path)
+            full_path = os.path.join(self.save_path, "checkpoints", path) if self.save_path else path
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             torch.save(self.model.state_dict(), full_path)
         else:
