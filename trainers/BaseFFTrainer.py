@@ -178,9 +178,9 @@ class BaseFFTrainer(BaseTrainer):
         if self.save_path:
             # Ensure the save directory exists
             os.makedirs(self.save_path, exist_ok=True)
-            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_loss_{subtitle}.png")
+            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_loss_{subtitle}.svg")
         else:
-            plot_path = f"./{extractor_name}_{processor_name}_loss_{subtitle}.png"
+            plot_path = f"./{extractor_name}_{processor_name}_loss_{subtitle}.svg"
         
         plt.savefig(plot_path)
         plt.close()  # Close the figure to free memory
@@ -203,9 +203,9 @@ class BaseFFTrainer(BaseTrainer):
         if self.save_path:
             # Ensure the save directory exists
             os.makedirs(self.save_path, exist_ok=True)
-            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_EER_{subtitle}.png")
+            plot_path = os.path.join(self.save_path, f"{extractor_name}_{processor_name}_EER_{subtitle}.svg")
         else:
-            plot_path = f"./{extractor_name}_{processor_name}_EER_{subtitle}.png"
+            plot_path = f"./{extractor_name}_{processor_name}_EER_{subtitle}.svg"
         
         plt.savefig(plot_path)
         plt.close()  # Close the figure to free memory
